@@ -6,12 +6,12 @@ import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAg67RQ681G4UQDr7Geo6bq3aV0U9puUxs",
-  authDomain: "legal-network-ad078.firebaseapp.com",
-  projectId: "legal-network-ad078",
-  storageBucket:"legal-network-ad078.firebasestorage.app",
-  messagingSenderId: "10659567570",
-  appId:  "1:10659567570:web:7ec27c8862f9474e5bda0b",
+  apiKey: import.meta.env.API_KEY ,
+  authDomain: import.meta.env.AUTH_DOMAIN,
+  projectId: import.meta.env.PROJECT_ID,
+  storageBucket: import.meta.env.STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.MESSAGING_SENDER_ID,
+  appId: import.meta.env.APP_ID
 };
 
 // Initialize Firebase
