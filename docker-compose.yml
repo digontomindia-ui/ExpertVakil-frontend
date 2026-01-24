@@ -1,0 +1,16 @@
+services:
+  user:
+    build: ./expert_vakeel
+    container_name: expert_vakeel
+    command: npm run dev
+    ports:
+      - 3004:3004
+    environment:
+      PORT: 3004
+
+  admin:
+    build: ./admin
+    container_name: admin
+    command: npm run dev
+    ports:
+      - 3001:3001
