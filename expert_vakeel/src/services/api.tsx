@@ -313,7 +313,7 @@ export interface ErrorResponse {
 
 // Environment configuration
 const getBaseURL = () => {
-  return import.meta.env.VITE_API_BASE_URL;
+  return "https://api.legalnetwork.in";
 };
 
 const api = axios.create({

@@ -2,7 +2,7 @@
 // API Configuration
 const API_CONFIG = {
   // Development URL
-  BASE_URL: import.meta.env.VITE_API_BASE_URL,
+  BASE_URL: "https://api.legalnetwork.in",
 
   // Production URL (uncomment when deploying)
   // BASE_URL: "https://api.legalnetwork.in",
