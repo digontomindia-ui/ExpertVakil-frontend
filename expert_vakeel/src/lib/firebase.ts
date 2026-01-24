@@ -1,17 +1,17 @@
 // Firebase Client Configuration
-import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp } from 'firebase/app';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyAg67RQ681G4UQDr7Geo6bq3aV0U9puUxs",
+  authDomain: "legal-network-ad078.firebaseapp.com",
+  projectId: "legal-network-ad078",
+  storageBucket:"legal-network-ad078.firebasestorage.app",
+  messagingSenderId: "10659567570",
+  appId:  "1:10659567570:web:7ec27c8862f9474e5bda0b",
 };
 
 // Initialize Firebase
@@ -27,3 +27,4 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 export default app;
+
