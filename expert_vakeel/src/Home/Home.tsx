@@ -22,10 +22,211 @@ export default function Home() {
   const [citySearch, setCitySearch] = useState("");
   const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
 
-  // Dynamic data from API
-  const [dynamicCities, setDynamicCities] = useState<string[]>([]);
-  const [dynamicCategories, setDynamicCategories] = useState<string[]>([]);
-  const [dynamicLoading, setDynamicLoading] = useState(true);
+  // Combined states
+  const [data, setData] = useState<{
+    cities: string[];
+    categories: string[];
+    queries: Query[];
+  }>({
+    cities: [],
+    categories: [],
+    queries: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 1. CLEAR SESSION/COOKIES ON VISIT - Add this useEffect at the top
+  useEffect(() => {
+    const clearSessionOnVisit = () => {
+      try {
+        // List of all possible token/storage keys to clear
+        const storageKeys = [
+          "token",
+          "accessToken",
+          "refreshToken",
+          "user",
+          "userData",
+          "auth_token",
+          "authToken",
+          "session",
+          "sessionId",
+          "userId",
+          "user_id",
+          "isLoggedIn",
+          "loginStatus",
+          "userProfile",
+          "profile",
+        ];
+
+        // Clear localStorage
+        storageKeys.forEach((key) => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+
+        // Optionally clear all localStorage (more aggressive)
+        // localStorage.clear();
+        // sessionStorage.clear();
+
+        // Clear cookies - more comprehensive method
+        const cookies = document.cookie.split(";");
+        const domain = window.location.hostname;
+        const path = "/";
+
+        cookies.forEach((cookie) => {
+          const cookieParts = cookie.trim().split("=");
+          const cookieName = cookieParts[0];
+
+          // Set expiration to past date to delete
+          const expirationDate = new Date(0).toUTCString();
+
+          // Delete cookie with various settings to ensure it's cleared
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path};`;
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; domain=${domain};`;
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; domain=.${domain};`;
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=/;`;
+
+          // Also try to clear secure cookies if applicable
+          if (window.location.protocol === "https:") {
+            document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; Secure;`;
+          }
+        });
+
+        // Clear any indexedDB or other storage if needed
+        if (window.indexedDB) {
+          indexedDB.databases?.().then((dbs) => {
+            dbs.forEach((db) => {
+              if (db.name) indexedDB.deleteDatabase(db.name);
+            });
+          });
+        }
+
+        console.log("Session cleared on home page visit");
+      } catch (error) {
+        console.error("Error clearing session:", error);
+      }
+    };
+
+    // Run only once when component mounts (user visits home page)
+    clearSessionOnVisit();
+  }, []); // Empty dependency array ensures it runs only once on mount
+
+  // 2. Combined data fetching - moved to separate useEffect
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        setIsLoading(true);
+
+        // Fetch both data sources in parallel
+        const [dynamicDataResponse, queriesResponse] = await Promise.all([
+          publicUserAPI.getAll().catch(() => ({ data: { data: [] } })),
+          queryAPI
+            .getAll({ limit: 10 })
+            .catch(() => ({ data: { success: false, data: [] } })),
+        ]);
+
+        const users = dynamicDataResponse.data.data || [];
+        const queriesData = queriesResponse.data.success
+          ? queriesResponse.data.data
+          : [];
+
+        // Process cities and categories
+        const citiesSet = new Set<string>();
+        const categoriesSet = new Set<string>();
+
+        for (const user of users) {
+          if (user.city) {
+            const cleanedCity = user.city
+              .trim()
+              .replace(/\s+/g, " ")
+              .replace(/[^\w\s-]/g, "")
+              .replace(/^\s*-\s*|\s*-\s*$/g, "")
+              .trim();
+            if (cleanedCity) citiesSet.add(cleanedCity);
+          }
+
+          if (user.specializations?.length) {
+            user.specializations.forEach((spec) => {
+              if (spec) categoriesSet.add(spec.trim());
+            });
+          }
+        }
+
+        // Use fallback data if API returns empty
+        const finalCities = Array.from(citiesSet).sort();
+        const finalCategories = Array.from(categoriesSet).sort();
+
+        setData({
+          cities:
+            finalCities.length > 0
+              ? finalCities
+              : [
+                  "Chandigarh",
+                  "Mohali",
+                  "Panchkula",
+                  "Delhi",
+                  "Mumbai",
+                  "Bengaluru",
+                  "Kolkata",
+                  "Chennai",
+                  "Hyderabad",
+                  "Pune",
+                ],
+          categories:
+            finalCategories.length > 0
+              ? finalCategories
+              : [
+                  "Civil Matters",
+                  "Criminal Matters",
+                  "Family Matters",
+                  "Labour/Employee Matters",
+                  "Taxation Matters",
+                  "Documentation & Registration",
+                  "Trademark & Copyright Matters",
+                  "High Court Matters",
+                  "Supreme Court Matters",
+                  "Forums and Tribunal Matters",
+                  "Business Matters",
+                ],
+          queries: queriesData,
+        });
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        // Fallback to static data
+        setData({
+          cities: [
+            "Chandigarh",
+            "Mohali",
+            "Panchkula",
+            "Delhi",
+            "Mumbai",
+            "Bengaluru",
+            "Kolkata",
+            "Chennai",
+            "Hyderabad",
+            "Pune",
+          ],
+          categories: [
+            "Civil Matters",
+            "Criminal Matters",
+            "Family Matters",
+            "Labour/Employee Matters",
+            "Taxation Matters",
+            "Documentation & Registration",
+            "Trademark & Copyright Matters",
+            "High Court Matters",
+            "Supreme Court Matters",
+            "Forums and Tribunal Matters",
+            "Business Matters",
+          ],
+          queries: [],
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, []);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,14 +250,15 @@ export default function Home() {
 
   // City search functionality
   const filteredCities = useMemo(() => {
-    if (!citySearch.trim()) return dynamicCities.slice(0, 5); // Show first 5 if no search
+    const cities = data.cities;
+    if (!citySearch.trim()) return cities.slice(0, 5);
 
     const regex = new RegExp(
       citySearch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
       "i",
     );
-    return dynamicCities.filter((city) => regex.test(city)).slice(0, 5); // Limit to 5 results for better UX
-  }, [dynamicCities, citySearch]);
+    return cities.filter((city) => regex.test(city)).slice(0, 5);
+  }, [data.cities, citySearch]);
 
   const handleCityInputChange = (value: string) => {
     setCitySearch(value);
@@ -74,7 +276,6 @@ export default function Home() {
   };
 
   const handleCityInputBlur = (e: React.FocusEvent) => {
-    // Don't close dropdown if clicking on dropdown items
     const relatedTarget = e.relatedTarget as HTMLElement;
     if (
       cityDropdownRef.current &&
@@ -83,116 +284,8 @@ export default function Home() {
     ) {
       return;
     }
-
-    // Delay hiding dropdown to allow click selection
     setTimeout(() => setCityDropdownOpen(false), 200);
   };
-
-  // ------------------------------
-  // DYNAMIC DATA FROM API
-  // ------------------------------
-  useEffect(() => {
-    const fetchDynamicData = async () => {
-      try {
-        setDynamicLoading(true);
-        const response = await publicUserAPI.getAll();
-
-        if (response.data.data) {
-          const users = response.data.data;
-
-          // Extract unique cities with regex cleanup
-          const citiesSet = new Set<string>();
-          const categoriesSet = new Set<string>();
-
-          for (const user of users) {
-            // Process cities with regex (clean whitespace, remove special chars, normalize)
-            if (user.city) {
-              const cleanedCity = user.city
-                .trim()
-                .replace(/\s+/g, " ") // normalize whitespace
-                .replace(/[^\w\s-]/g, "") // remove special chars except hyphens
-                .replace(/^\s*-\s*|\s*-\s*$/g, "") // remove leading/trailing hyphens
-                .trim();
-
-              if (cleanedCity) {
-                citiesSet.add(cleanedCity);
-              }
-            }
-
-            // Extract specializations (categories)
-            if (user.specializations?.length) {
-              user.specializations.forEach((spec) => {
-                if (spec) categoriesSet.add(spec.trim());
-              });
-            }
-          }
-
-          // Sort and set the dynamic data
-          setDynamicCities(Array.from(citiesSet).sort());
-          setDynamicCategories(Array.from(categoriesSet).sort());
-        } else {
-          // Fallback to static data if API fails
-          setDynamicCities([
-            "Chandigarh",
-            "Mohali",
-            "Panchkula",
-            "Delhi",
-            "Mumbai",
-            "Bengaluru",
-            "Kolkata",
-            "Chennai",
-            "Hyderabad",
-            "Pune",
-          ]);
-          setDynamicCategories([
-            "Civil Matters",
-            "Criminal Matters",
-            "Family Matters",
-            "Labour/Employee Matters",
-            "Taxation Matters",
-            "Documentation & Registration",
-            "Trademark & Copyright Matters",
-            "High Court Matters",
-            "Supreme Court Matters",
-            "Forums and Tribunal Matters",
-            "Business Matters",
-          ]);
-        }
-      } catch (err) {
-        console.error("Error fetching dynamic data:", err);
-        // Fallback to static data
-        setDynamicCities([
-          "Chandigarh",
-          "Mohali",
-          "Panchkula",
-          "Delhi",
-          "Mumbai",
-          "Bengaluru",
-          "Kolkata",
-          "Chennai",
-          "Hyderabad",
-          "Pune",
-        ]);
-        setDynamicCategories([
-          "Civil Matters",
-          "Criminal Matters",
-          "Family Matters",
-          "Labour/Employee Matters",
-          "Taxation Matters",
-          "Documentation & Registration",
-          "Trademark & Copyright Matters",
-          "High Court Matters",
-          "Supreme Court Matters",
-          "Forums and Tribunal Matters",
-          "Business Matters",
-        ]);
-      } finally {
-        setDynamicLoading(false);
-      }
-    };
-
-    fetchDynamicData();
-  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -213,29 +306,6 @@ export default function Home() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [cityDropdownOpen]);
-
-  // ------------------------------
-  // DYNAMIC QUERIES STATE
-  // ------------------------------
-  const [queries, setQueries] = useState<Query[]>([]);
-  const [queriesLoading, setQueriesLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchQueries = async () => {
-      try {
-        setQueriesLoading(true);
-        const response = await queryAPI.getAll({ limit: 10 });
-        if (response.data.success) setQueries(response.data.data);
-        else setQueries([]);
-      } catch (err) {
-        console.error("Error fetching queries:", err);
-        setQueries([]);
-      } finally {
-        setQueriesLoading(false);
-      }
-    };
-    fetchQueries();
-  }, []);
 
   const [selectedCat] = useState<string>("All");
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -286,7 +356,7 @@ export default function Home() {
   };
 
   const processedQueries = useMemo(() => {
-    return queries.map((q) => ({
+    return data.queries.map((q) => ({
       id: q.id,
       title: q.title,
       description: q.description,
@@ -295,7 +365,7 @@ export default function Home() {
       timeAgo: formatTimeAgo(q.createdAt),
       category: determineCategory(q),
     }));
-  }, [queries]);
+  }, [data.queries]);
 
   const filteredQueries = useMemo(() => {
     if (selectedCat === "All") return processedQueries;
@@ -349,15 +419,15 @@ export default function Home() {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    disabled={dynamicLoading}
+                    disabled={isLoading}
                     className="h-12 w-full appearance-none rounded-xl bg-white px-4 pr-10 text-sm text-gray-900 outline-none ring-2 ring-transparent focus:ring-2 focus:ring-[#FFA800] hover:ring-gray-300 transition-all"
                   >
                     <option value="">
-                      {dynamicLoading
+                      {isLoading
                         ? "Loading categories..."
                         : "Select Legal Category"}
                     </option>
-                    {dynamicCategories.map((cat) => (
+                    {data.categories.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
                       </option>
@@ -482,7 +552,7 @@ export default function Home() {
             ref={scrollerRef}
             className="flex gap-3 overflow-x-auto pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 md:gap-5"
           >
-            {queriesLoading ? (
+            {isLoading ? (
               Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={`loading-${idx}`}

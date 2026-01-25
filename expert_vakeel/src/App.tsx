@@ -7,7 +7,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 // Import sync utility for development
-import './utils/syncClientProfile';
+import "./utils/syncClientProfile";
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -19,7 +19,7 @@ function ScrollToTop() {
       window.scrollTo({
         top: 0,
         left: 0,
-        behavior: 'instant' // Use instant instead of smooth for immediate scroll
+        behavior: "instant", // Use instant instead of smooth for immediate scroll
       });
     }, 0);
 
@@ -29,15 +29,98 @@ function ScrollToTop() {
   return null;
 }
 
+// Clear session on app initialization
+function ClearSessionOnLoad() {
+  useEffect(() => {
+    const clearSessionOnVisit = () => {
+      try {
+        // List of all possible token/storage keys to clear
+        const storageKeys = [
+          "token",
+          "accessToken",
+          "refreshToken",
+          "user",
+          "userData",
+          "auth_token",
+          "authToken",
+          "session",
+          "sessionId",
+          "userId",
+          "user_id",
+          "isLoggedIn",
+          "loginStatus",
+          "userProfile",
+          "profile",
+        ];
+
+        // Clear localStorage
+        storageKeys.forEach((key) => {
+          localStorage.removeItem(key);
+          sessionStorage.removeItem(key);
+        });
+
+        // Clear cookies - comprehensive method
+        const cookies = document.cookie.split(";");
+        const domain = window.location.hostname;
+        const path = "/";
+
+        cookies.forEach((cookie) => {
+          const cookieParts = cookie.trim().split("=");
+          const cookieName = cookieParts[0];
+
+          // Set expiration to past date to delete
+          const expirationDate = new Date(0).toUTCString();
+
+          // Delete cookie with various settings to ensure it's cleared
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path};`;
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; domain=${domain};`;
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; domain=.${domain};`;
+          document.cookie = `${cookieName}=; expires=${expirationDate}; path=/;`;
+
+          // Also try to clear secure cookies if applicable
+          if (window.location.protocol === "https:") {
+            document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; Secure;`;
+          }
+        });
+
+        // Clear any service worker cache if needed
+        if ("caches" in window) {
+          caches.keys().then((cacheNames) => {
+            cacheNames.forEach((cacheName) => {
+              caches.delete(cacheName);
+            });
+          });
+        }
+
+        console.log("Session cleared on app initialization");
+      } catch (error) {
+        console.error("Error clearing session:", error);
+      }
+    };
+
+    // Run only once when app loads
+    clearSessionOnVisit();
+  }, []); // Empty dependency array ensures it runs only once on mount
+
+  return null;
+}
+
 // API Configuration
-const baseURL= "https://api.legalnetwork.in";
+const baseURL = "https://api.legalnetwork.in";
 
 // Types
-interface ApiResponse<T> { success: boolean; data: T; error?: string; }
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
 type Id = string;
 
 // API Service
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<T> {
   const token = localStorage.getItem("token");
   const res = await fetch(`${baseURL}${endpoint}`, {
     ...options,
@@ -49,58 +132,90 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   });
 
   let data: ApiResponse<T>;
-  try { data = await res.json(); } catch { throw new Error("Invalid server response"); }
-  if (!res.ok || !data.success) throw new Error(data.error || "API request failed");
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error("Invalid server response");
+  }
+  if (!res.ok || !data.success)
+    throw new Error(data.error || "API request failed");
   return data.data;
 }
 
 export const apiService = {
   clients: {
-    register: (data: Record<string, unknown>) => request("/api/clients", { method: "POST", body: JSON.stringify(data) }),
-    login: (data: Record<string, unknown>) => request("/api/clients/login", { method: "POST", body: JSON.stringify(data) }),
+    register: (data: Record<string, unknown>) =>
+      request("/api/clients", { method: "POST", body: JSON.stringify(data) }),
+    login: (data: Record<string, unknown>) =>
+      request("/api/clients/login", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
     logout: () => request("/api/clients/logout", { method: "POST" }),
     getMe: () => request("/api/clients/me"),
     getAll: () => request("/api/clients"),
     getById: (id: Id) => request(`/api/clients/${id}`),
-    update: (id: Id, data: Record<string, unknown>) => request(`/api/clients/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    update: (id: Id, data: Record<string, unknown>) =>
+      request(`/api/clients/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
     delete: (id: Id) => request(`/api/clients/${id}`, { method: "DELETE" }),
     deleteAll: () => request("/api/clients", { method: "DELETE" }),
   },
   users: {
-    create: (data: Record<string, unknown>) => request("/api/users", { method: "POST", body: JSON.stringify(data) }),
+    create: (data: Record<string, unknown>) =>
+      request("/api/users", { method: "POST", body: JSON.stringify(data) }),
     getAll: () => request("/api/users"),
     getById: (id: Id) => request(`/api/users/${id}`),
-    update: (id: Id, data: Record<string, unknown>) => request(`/api/users/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    update: (id: Id, data: Record<string, unknown>) =>
+      request(`/api/users/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
     delete: (id: Id) => request(`/api/users/${id}`, { method: "DELETE" }),
     deleteAll: () => request("/api/users", { method: "DELETE" }),
   },
   queries: {
-    create: (data: Record<string, unknown>) => request("/api/queries", { method: "POST", body: JSON.stringify(data) }),
+    create: (data: Record<string, unknown>) =>
+      request("/api/queries", { method: "POST", body: JSON.stringify(data) }),
     getAll: () => request("/api/queries"),
     getByUserId: (userId: Id) => request(`/api/queries/user/${userId}`),
     getById: (id: Id) => request(`/api/queries/${id}`),
-    update: (id: Id, data: Record<string, unknown>) => request(`/api/queries/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    update: (id: Id, data: Record<string, unknown>) =>
+      request(`/api/queries/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
     delete: (id: Id) => request(`/api/queries/${id}`, { method: "DELETE" }),
     deleteAll: () => request("/api/queries", { method: "DELETE" }),
   },
   support: {
-    submit: (data: Record<string, unknown>) => request("/api/support", { method: "POST", body: JSON.stringify(data) }),
+    submit: (data: Record<string, unknown>) =>
+      request("/api/support", { method: "POST", body: JSON.stringify(data) }),
     getAll: () => request("/api/support"),
     getById: (id: Id) => request(`/api/support/${id}`),
-    update: (id: Id, data: Record<string, unknown>) => request(`/api/support/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    update: (id: Id, data: Record<string, unknown>) =>
+      request(`/api/support/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
     delete: (id: Id) => request(`/api/support/${id}`, { method: "DELETE" }),
   },
   news: {
-    create: (data: Record<string, unknown>) => request("/api/news", { method: "POST", body: JSON.stringify(data) }),
+    create: (data: Record<string, unknown>) =>
+      request("/api/news", { method: "POST", body: JSON.stringify(data) }),
     getAll: (params?: Record<string, unknown>) => {
       const query = params ? `?${new URLSearchParams(params as any)}` : "";
       return request(`/api/news${query}`);
     },
     getById: (id: Id) => request(`/api/news/${id}`),
-    update: (id: Id, data: Record<string, unknown>) => request(`/api/news/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    update: (id: Id, data: Record<string, unknown>) =>
+      request(`/api/news/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     delete: (id: Id) => request(`/api/news/${id}`, { method: "DELETE" }),
     deleteAll: () => request("/api/news", { method: "DELETE" }),
-    incrementViews: (id: Id) => request(`/api/news/${id}/views/increment`, { method: "POST" }),
+    incrementViews: (id: Id) =>
+      request(`/api/news/${id}/views/increment`, { method: "POST" }),
   },
   general: {
     getApiInfo: () => request("/"),
@@ -109,7 +224,12 @@ export const apiService = {
 };
 
 // App Shell
-const HIDE_CHROME_PATTERNS = ["/login", "/signup", "/auth/login", "/auth/register"];
+const HIDE_CHROME_PATTERNS = [
+  "/login",
+  "/signup",
+  "/auth/login",
+  "/auth/register",
+];
 
 function AppShell() {
   const { pathname } = useLocation();
@@ -117,9 +237,12 @@ function AppShell() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <ClearSessionOnLoad /> {/* Add this component */}
       <ScrollToTop />
       {!hideChrome && <Header />}
-      <main className="flex-1"><AppRoutes /></main>
+      <main className="flex-1">
+        <AppRoutes />
+      </main>
       {!hideChrome && <Footer />}
     </div>
   );
