@@ -14,7 +14,7 @@ import BlogListing from "../app/Blog/BlogListing";
 import BlogDetail from "../app/Blog/BlogDetail";
 import ServiceList from "../app/Service/ServiceList";
 import ServiceDetail from "../app/Service/ServiceDetail";
-import ServicesPage from "../app/Service/ServicesPage";
+
 import MyBookings from "../app/Service/MyBookings";
 import PrivacyPolicyLegalNetwork from "../app/Privacy/Privacy";
 
