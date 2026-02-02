@@ -17,15 +17,19 @@ import {
   Car,
   Mail,
   User,
-  Lock,
   HomeIcon,
   IndianRupee,
   MapPin,
   Hash,
   CalendarDays,
   UserCircle,
+  ChevronRight,
+  ShieldAlert,
+  Gavel,
+  ScrollText,
+  CheckCircle2,
+  ArrowRight
 } from "lucide-react";
-import axios from "axios";
 
 // Types
 interface Service {
@@ -75,19 +79,6 @@ interface ChallanItem {
   offences: ChallanOffence[];
 }
 
-interface ChallanApiResponse {
-  statusCode: number;
-  message: string;
-  requestId?: string;
-  data: ChallanItem[];
-}
-
-interface BackendResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
 interface ProcessedChallanData {
   vehicleNumber: string;
   ownerName: string;
@@ -106,6 +97,73 @@ interface ProcessedChallanData {
   totalPending: number;
 }
 
+// Helper to determine background image
+const getServiceBackground = (service: Service | null) => {
+  if (!service) return "/assets/hero_banner.png";
+  const text = (service.name + " " + service.categories.join(" ")).toLowerCase();
+
+  if (text.includes("traffic") || text.includes("challan")) return "/assets/hero_images/traffic.png";
+  if (text.includes("family") || text.includes("divorce") || text.includes("custody")) return "/assets/hero_images/family.png";
+  if (text.includes("criminal") || text.includes("defense") || text.includes("bail")) return "/assets/hero_images/criminal.png";
+  if (text.includes("property") || text.includes("real estate")) return "/assets/hero_images/property.png";
+  if (text.includes("document") || text.includes("drafting") || text.includes("affidavit")) return "/assets/hero_images/docs.png";
+  if (text.includes("registration") || text.includes("company") || text.includes("trademark")) return "/assets/hero_images/registration.png";
+
+  return "/assets/hero_banner.png";
+};
+
+// Reusable styling components matching premium design
+const FormInput = ({
+  value,
+  onChange,
+  placeholder,
+  icon: Icon,
+  type = "text",
+  maxLength
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  icon?: any;
+  type?: string;
+  maxLength?: number;
+}) => (
+  <div className="relative mb-3">
+    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+      {Icon && <Icon className="w-4 h-4" />}
+    </div>
+    <input
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3 pl-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all placeholder:text-gray-500 font-medium text-sm"
+    />
+  </div>
+);
+
+const PrimaryButton = ({
+  children,
+  onClick,
+  disabled = false,
+  className = ""
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`w-full text-white font-bold py-3.5 rounded-xl shadow-lg transform transition hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 text-sm uppercase tracking-wide disabled:opacity-70 disabled:cursor-not-allowed ${className}`}
+  >
+    {children}
+  </button>
+);
+
+
 export default function ServiceDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -121,17 +179,13 @@ export default function ServiceDetail() {
   const [description, setDescription] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [booking, setBooking] = useState(false);
-  const [bookingStatus, setBookingStatus] = useState<"" | "success" | "error">(
-    "",
-  );
+  const [bookingStatus, setBookingStatus] = useState<"" | "success" | "error">("");
   const [bookingMessage, setBookingMessage] = useState("");
 
   // Traffic Challan specific state
   const [vehicleNumber, setVehicleNumber] = useState("");
   const [searchingChallan, setSearchingChallan] = useState(false);
-  const [challanData, setChallanData] = useState<ProcessedChallanData | null>(
-    null,
-  );
+  const [challanData, setChallanData] = useState<ProcessedChallanData | null>(null);
   const [challanError, setChallanError] = useState<string | null>(null);
 
   // User registration form state
@@ -141,9 +195,7 @@ export default function ServiceDetail() {
   const [userCity, setUserCity] = useState("");
   const [userPhone, setUserPhone] = useState("");
   const [registering, setRegistering] = useState(false);
-  const [registrationError, setRegistrationError] = useState<string | null>(
-    null,
-  );
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);
   const [clientId, setClientId] = useState<string>("");
@@ -205,12 +257,10 @@ export default function ServiceDetail() {
 
   const handleBookNow = () => {
     if (!user && !isRegistered) {
-      // For traffic challan services, show registration form
       if (isTrafficChallanService) {
         setShowRegistrationForm(true);
         return;
       }
-      // For other services, redirect to login
       navigate("/login");
       return;
     }
@@ -219,7 +269,6 @@ export default function ServiceDetail() {
   };
 
   const handleSubmitBooking = async () => {
-    // Determine client ID
     const bookingClientId = clientId || user?.id || user?._id;
 
     if (!bookingClientId || !service) {
@@ -228,7 +277,6 @@ export default function ServiceDetail() {
       return;
     }
 
-    // Validation
     if (!phoneNumber.trim()) {
       setBookingStatus("error");
       setBookingMessage("Please enter a phone number");
@@ -257,7 +305,6 @@ export default function ServiceDetail() {
         setBookingStatus("success");
         setBookingMessage("Booking successful! Redirecting to WhatsApp...");
 
-        // Construct WhatsApp URL
         const targetNumber = service.number
           ? service.number.replace(/\D/g, "")
           : "919711840150";
@@ -266,13 +313,10 @@ export default function ServiceDetail() {
         );
         const whatsappUrl = `https://wa.me/${targetNumber}?text=${message}`;
 
-        // Open WhatsApp
         window.open(whatsappUrl, "_blank");
 
-        // Reset form after delay
         setTimeout(() => {
           if (isRegistered && !user) {
-            // If user just registered, redirect to home
             navigate("/");
           } else {
             navigate("/my-bookings");
@@ -291,21 +335,12 @@ export default function ServiceDetail() {
   };
 
   const getUserContactDetails = () => {
-    // Priority order
     if (user?.email && user?.phone) {
-      return {
-        email: user.email,
-        phone: user.phone,
-      };
+      return { email: user.email, phone: user.phone };
     }
-
     if (userEmail && userPhone) {
-      return {
-        email: userEmail,
-        phone: userPhone,
-      };
+      return { email: userEmail, phone: userPhone };
     }
-
     return {
       email: localStorage.getItem("email") || "",
       phone: localStorage.getItem("phone") || "",
@@ -317,7 +352,6 @@ export default function ServiceDetail() {
       setChallanError("Please enter vehicle number");
       return;
     }
-
     if (user || isRegistered) {
       searchChallan();
     } else {
@@ -332,7 +366,6 @@ export default function ServiceDetail() {
 
     try {
       const { email, phone } = getUserContactDetails();
-
       if (!email || !phone) {
         throw new Error("User contact details missing. Please register first.");
       }
@@ -346,10 +379,7 @@ export default function ServiceDetail() {
       const apiResponse = response.data;
       const challanPayload = apiResponse.data;
 
-      if (
-        challanPayload.statusCode === 200 &&
-        Array.isArray(challanPayload.data)
-      ) {
+      if (challanPayload.statusCode === 200 && Array.isArray(challanPayload.data)) {
         const pendingChallans = challanPayload.data.filter(
           (c: ChallanItem) => c.challanStatus.toLowerCase() === "pending",
         );
@@ -361,10 +391,7 @@ export default function ServiceDetail() {
             pendingChallans: [],
             totalPending: 0,
           });
-
-          setChallanError(
-            `No pending challans found for vehicle ${vehicleNumber.toUpperCase()}.`,
-          );
+          setChallanError(`No pending challans found for vehicle ${vehicleNumber.toUpperCase()}.`);
         } else {
           const processedChallans = pendingChallans.map(
             (challan: ChallanItem) => ({
@@ -394,53 +421,26 @@ export default function ServiceDetail() {
           });
         }
       } else {
-        throw new Error(
-          challanPayload.message ||
-            apiResponse.message ||
-            "No challan data found",
-        );
+        throw new Error(challanPayload.message || apiResponse.message || "No challan data found");
       }
     } catch (err: any) {
       console.error("Error fetching challan:", err);
-
-      const backendMessage =
-        err.response?.data?.message ||
-        err.message ||
-        "Unable to fetch challan details. Please try again.";
-
-      setChallanError(backendMessage);
+      setChallanError(err.response?.data?.message || err.message || "Unable to fetch challan details.");
     } finally {
       setSearchingChallan(false);
     }
   };
 
   const handleRegisterUser = async () => {
-    // Validation
-    if (!userName.trim()) {
-      setRegistrationError("Please enter your name");
-      return;
-    }
-
-    if (!userEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) {
-      setRegistrationError("Please enter a valid email address");
-      return;
-    }
-
-    if (!userCity.trim()) {
-      setRegistrationError("Please enter your City");
-      return;
-    }
-
-    if (!userPhone.trim() || !/^[0-9]{10}$/.test(userPhone)) {
-      setRegistrationError("Please enter a valid 10-digit phone number");
-      return;
-    }
+    if (!userName.trim()) return setRegistrationError("Please enter your name");
+    if (!userEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail)) return setRegistrationError("Please enter valid email");
+    if (!userCity.trim()) return setRegistrationError("Please enter your City");
+    if (!userPhone.trim() || !/^[0-9]{10}$/.test(userPhone)) return setRegistrationError("Please enter valid 10-digit phone");
 
     setRegistering(true);
     setRegistrationError(null);
 
     try {
-      // Call registration endpoint (no OTP required)
       const response = await api.post("/api/verify/register", {
         name: userName.trim(),
         email: userEmail.trim().toLowerCase(),
@@ -454,579 +454,264 @@ export default function ServiceDetail() {
         setIsRegistered(true);
         setRegistrationSuccess(true);
         setShowRegistrationForm(false);
-
-        // Store data
         localStorage.setItem("email", userEmail);
         localStorage.setItem("phone", userPhone);
-
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-        }
-        if (data.firebaseToken) {
-          localStorage.setItem("firebaseToken", data.firebaseToken);
-        }
+        if (data.token) localStorage.setItem("token", data.token);
+        if (data.firebaseToken) localStorage.setItem("firebaseToken", data.firebaseToken);
         if (data.clientId) {
           setClientId(data.clientId);
           localStorage.setItem("clientId", data.clientId);
         }
-
-        setRegistrationError(
-          "Registration successful! You can now search for challans.",
-        );
-
-        // Automatically search for challan if vehicle number is entered
-        if (vehicleNumber.trim()) {
-          setTimeout(() => {
-            searchChallan();
-          }, 1000);
-        }
+        setRegistrationError("Registration successful!");
+        if (vehicleNumber.trim()) setTimeout(() => searchChallan(), 1000);
       } else {
         throw new Error(data.message || "Registration failed");
       }
     } catch (err: any) {
-      console.error("Registration Error:", err);
-      setRegistrationError(
-        err.response?.data?.message || "Registration failed. Please try again.",
-      );
+      setRegistrationError(err.response?.data?.message || "Registration failed.");
     } finally {
       setRegistering(false);
     }
   };
 
-  const handleCloseRegistration = () => {
-    setShowRegistrationForm(false);
-    setRegistrationError(null);
-    setRegistrationSuccess(false);
-  };
+  if (loading) return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <Loader className="w-10 h-10 text-blue-600 animate-spin" />
+    </div>
+  );
 
-  if (loading) {
-    return (
-      <main className="min-h-[100dvh] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative mb-4">
-            <div className="absolute inset-0 animate-ping rounded-full bg-blue-100 opacity-75"></div>
-            <Loader className="relative inline-block animate-spin h-10 w-10 text-blue-600" />
-          </div>
-          <p className="text-sm font-medium text-gray-500">
-            Loading service details...
-          </p>
-        </div>
-      </main>
-    );
-  }
-
-  if (error || !service) {
-    return (
-      <main className="min-h-[100dvh] bg-white flex items-center justify-center">
-        <div className="text-center max-w-md px-4">
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-50">
-            <span className="text-4xl">⚠️</span>
-          </div>
-          <h2 className="mb-2 text-xl font-bold text-gray-900">
-            Service Not Found
-          </h2>
-          <p className="mb-6 text-gray-600">
-            {error || "The service you are looking for does not exist."}
-          </p>
-          <button
-            onClick={() => navigate("/services")}
-            className="rounded-full bg-black px-8 py-3 text-sm font-semibold text-white transition-transform hover:scale-105 hover:shadow-lg"
-          >
-            Back to Services
-          </button>
-        </div>
-      </main>
-    );
-  }
+  if (error || !service) return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+      <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+      <h2 className="text-xl font-bold text-gray-900 mb-2">Service Not Found</h2>
+      <p className="text-gray-500 mb-6">{error}</p>
+      <button onClick={() => navigate("/services")} className="px-6 py-2 bg-black text-white rounded-full">Back to Services</button>
+    </div>
+  );
 
   return (
-    <main className="min-h-[100dvh] bg-gray-50">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 pb-32 pt-20 text-white md:pt-28">
-        <div className="absolute left-0 top-0 h-full w-full overflow-hidden opacity-30">
-          <div className="absolute -right-20 -top-20 h-96 w-96 rounded-full bg-yellow-400 blur-3xl"></div>
-          <div className="absolute left-0 bottom-0 h-64 w-64 rounded-full bg-pink-500 blur-3xl"></div>
+    <main className="min-h-screen bg-gray-50 flex flex-col w-full">
+      {/* Premium Hero Section */}
+      <section className="relative w-full py-16 md:py-24 flex items-center justify-center p-4 overflow-hidden shadow-sm">
+        {/* Background */}
+        <div className="absolute inset-0 z-0 h-full">
+          <img
+            src={getServiceBackground(service)}
+            alt={service.name}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-gray-900/95 via-gray-900/80 to-transparent" />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <button
-            onClick={() => navigate("/services")}
-            className="mb-8 flex items-center gap-2 text-sm font-medium text-blue-100 hover:text-white transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Services
-          </button>
+        <div className="relative z-10 w-full max-w-screen-xl mx-auto flex flex-col md:flex-row items-center gap-8 md:gap-12">
+          <div className="flex-1 text-white">
+            <button
+              onClick={() => navigate("/services")}
+              className="mb-6 flex items-center gap-2 text-sm font-medium text-blue-200 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Services
+            </button>
+            <h1 className="text-3xl md:text-5xl font-bold mb-4 drop-shadow-md leading-tight">
+              {service.name}
+            </h1>
+            <p className="text-gray-200 text-lg leading-relaxed max-w-2xl font-light">
+              {service.description}
+            </p>
+          </div>
 
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight md:text-5xl lg:text-6xl drop-shadow-sm">
-                {service.name}
-              </h1>
+          {/* Booking/Contact Card Overlay */}
+          <div className="w-full md:w-[400px]">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl overflow-hidden border border-white/20 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Need Assistance?</h3>
+              <p className="text-sm text-gray-500 mb-6">Expert legal help is just a click away.</p>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 text-sm text-gray-700 bg-gray-50 p-2.5 rounded-lg">
+                  <Shield className="w-4 h-4 text-blue-600" /> Verified Lawyers
+                </div>
+                <div className="flex items-center gap-3 text-sm text-gray-700 bg-gray-50 p-2.5 rounded-lg">
+                  <Clock className="w-4 h-4 text-green-600" /> Fast Response
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <PrimaryButton className="bg-blue-900 hover:bg-blue-800" onClick={handleBookNow}>
+                  Book Consultation
+                </PrimaryButton>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Content Section */}
-      <div className="relative mx-auto -mt-20 max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-3">
-          {/* Left Column: Details */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Traffic Challan Search Box (only for traffic challan services) */}
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-screen-xl mx-auto px-4 py-12 -mt-8">
+        <div className="grid md:grid-cols-3 gap-8">
+
+          {/* Left Column: Details & Specialized Features */}
+          <div className="md:col-span-2 space-y-8">
+
+            {/* Traffic Challan Check (Conditional) */}
             {isTrafficChallanService && (
-              <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-gray-100">
-                <h2 className="mb-6 text-xl font-bold text-gray-900">
-                  Check Your Traffic Challan
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-3 mb-6">
+                  <Car className="w-6 h-6 text-blue-600" />
+                  Check Pending Challans
                 </h2>
-                <p className="mb-6 text-gray-600">
-                  Enter your vehicle number to check pending traffic challans
-                  and fines.
-                </p>
 
-                <div className="mb-6">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="relative flex-1">
-                      <Car className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <input
-                        type="text"
-                        value={vehicleNumber}
-                        onChange={(e) =>
-                          setVehicleNumber(e.target.value.toUpperCase())
-                        }
-                        placeholder="Enter Vehicle Number (e.g., DL3CBJ9466)"
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3.5 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                      />
-                    </div>
-                    <button
-                      onClick={handleSearchChallan}
-                      disabled={searchingChallan}
-                      className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-3.5 text-sm font-bold shadow-lg transition-all hover:shadow-xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 min-w-[140px]"
-                    >
-                      {searchingChallan ? (
-                        <>
-                          <Loader className="h-4 w-4 animate-spin" />
-                          Searching...
-                        </>
-                      ) : (
-                        <>
-                          <Search className="h-4 w-4" />
-                          Search Challan
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {challanError && (
-                    <div
-                      className={`mt-4 flex items-center gap-2 rounded-xl border p-4 ${
-                        challanError.includes("No pending challans") ||
-                        challanError.includes("No challan records")
-                          ? "border-yellow-200 bg-yellow-50"
-                          : "border-red-200 bg-red-50"
-                      }`}
-                    >
-                      <AlertCircle
-                        className={`h-5 w-5 ${
-                          challanError.includes("No pending challans") ||
-                          challanError.includes("No challan records")
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                        }`}
-                      />
-                      <span
-                        className={`text-sm ${
-                          challanError.includes("No pending challans") ||
-                          challanError.includes("No challan records")
-                            ? "text-yellow-700"
-                            : "text-red-700"
-                        }`}
-                      >
-                        {challanError}
-                      </span>
-                    </div>
-                  )}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  <input
+                    type="text"
+                    value={vehicleNumber}
+                    onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+                    placeholder="Enter Vehicle Number (e.g. DL1CAB1234)"
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-900 uppercase placeholder:font-normal"
+                  />
+                  <button
+                    onClick={handleSearchChallan}
+                    disabled={searchingChallan}
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-3 rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {searchingChallan ? <Loader className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                    Search
+                  </button>
                 </div>
+
+                {challanError && (
+                  <div className="p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <span className="text-sm font-medium">{challanError}</span>
+                  </div>
+                )}
 
                 {/* Challan Results */}
                 {challanData && (
-                  <div className="space-y-6">
-                    {/* Vehicle Summary */}
-                    <div className="rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="mt-8 space-y-6 animate-in slide-in-from-bottom-4">
+                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-6 text-white shadow-lg">
+                      <div className="flex justify-between items-start">
                         <div>
-                          <h3 className="text-lg font-bold text-gray-900">
-                            {challanData.vehicleNumber}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            <UserCircle className="inline h-4 w-4 mr-1" />
-                            Accused: {challanData.ownerName}
-                          </p>
+                          <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Vehicle Owner</p>
+                          <h3 className="text-xl font-bold">{challanData.ownerName}</h3>
+                          <p className="text-blue-300 font-mono mt-1">{challanData.vehicleNumber}</p>
                         </div>
-                        {challanData.totalPending > 0 && (
-                          <div className="text-right">
-                            <div className="text-2xl font-bold text-red-600">
-                              ₹{challanData.totalPending.toLocaleString()}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Total Pending
-                            </div>
-                          </div>
-                        )}
+                        <div className="text-right">
+                          <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Total Pending</p>
+                          <p className="text-2xl font-bold text-red-400">₹{challanData.totalPending.toLocaleString()}</p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Pending Challans */}
                     {challanData.pendingChallans.length > 0 ? (
-                      <div>
-                        <h4 className="mb-4 text-lg font-semibold text-gray-900">
-                          Pending Challans ({challanData.pendingChallans.length}
-                          )
-                        </h4>
-                        <div className="space-y-3">
-                          {challanData.pendingChallans.map((challan, index) => (
-                            <div
-                              key={index}
-                              className="rounded-xl border border-red-200 bg-red-50/50 p-4"
-                            >
-                              <div className="space-y-3">
-                                <div className="flex flex-col md:flex-row md:items-start justify-between gap-3">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <Hash className="h-4 w-4 text-gray-400" />
-                                      <span className="font-medium text-gray-900">
-                                        Challan No: {challan.challanNumber}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                                      <CalendarDays className="h-4 w-4" />
-                                      <span>Date: {challan.date}</span>
-                                    </div>
-                                    <div className="flex items-start gap-2 text-sm text-gray-600">
-                                      <MapPin className="h-4 w-4 mt-0.5" />
-                                      <span>Place: {challan.challanPlace}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-1 text-lg font-bold text-red-700">
-                                      <IndianRupee className="h-4 w-4" />
-                                      <span>
-                                        {challan.amount.toLocaleString()}
-                                      </span>
-                                    </div>
-
-                                    <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">
-                                      {challan.status}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Offences List */}
-                                <div className="border-t border-red-100 pt-3">
-                                  <div className="text-sm font-semibold text-gray-700 mb-1">
-                                    Offences:
-                                  </div>
-                                  <div className="space-y-1">
-                                    {challan.offences.map((offence, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="text-sm text-gray-600 pl-2 border-l-2 border-red-200"
-                                      >
-                                        <div className="font-medium">
-                                          {offence.offence_name}
-                                        </div>
-                                        <div className="text-xs text-gray-500">
-                                          {offence.motor_vehicle_act}
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
+                      <div className="space-y-4">
+                        {challanData.pendingChallans.map((c, i) => (
+                          <div key={i} className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow">
+                            <div className="flex justify-between mb-3">
+                              <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-xs font-bold">{c.challanNumber}</span>
+                              <span className="text-red-600 font-bold">₹{c.amount}</span>
                             </div>
-                          ))}
-                        </div>
-
-                        {/* Pay Now Button */}
-                        {/* <div className="rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-center">
-                          <h4 className="mb-2 text-lg font-bold text-white">
-                            Pay Your Challans Online
-                          </h4>
-                          <p className="mb-4 text-sm text-white/90">
-                            Clear all pending challans instantly with secure
-                            online payment
-                          </p>
-                          <button
-                            onClick={handleBookNow}
-                            className="rounded-xl bg-white px-8 py-3 text-sm font-bold text-amber-600 shadow-lg hover:bg-gray-50 transition-all hover:shadow-xl active:scale-95"
-                          >
-                            Pay Now ₹{challanData.totalPending.toLocaleString()}
-                          </button>
-                        </div> */}
+                            <h4 className="font-bold text-gray-900 mb-1">{c.violation || "Traffic Violation"}</h4>
+                            <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
+                              <span className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> {c.date}</span>
+                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {c.location}</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     ) : (
-                      /* No Pending Challans Found */
-                      <div className="rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 p-8 text-center">
-                        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                          <Check className="h-8 w-8 text-green-600" />
-                        </div>
-                        <h4 className="mb-2 text-xl font-bold text-gray-900">
-                          No Pending Challans!
-                        </h4>
-                        <p className="text-gray-600">
-                          Great news! There are no pending traffic challans for
-                          vehicle {challanData.vehicleNumber}.
-                        </p>
+                      <div className="text-center py-8 bg-green-50 rounded-xl border border-green-100">
+                        <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
+                        <h4 className="text-green-800 font-bold">No Pending Challans</h4>
+                        <p className="text-green-600 text-sm">Great job keeping your record clean!</p>
                       </div>
                     )}
                   </div>
                 )}
               </div>
-            )}
+            )} {/* End Traffic Section */}
 
-            {/* Description Card */}
-            <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-gray-100">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">
-                About this Service
-              </h2>
-              <p className="text-lg leading-relaxed text-gray-600">
-                {service.description}
-              </p>
-
-              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="flex items-center gap-3 rounded-2xl bg-blue-50 p-4">
-                  <div className="rounded-full bg-blue-100 p-2 text-blue-600">
-                    <Shield className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">
-                      Verified
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Expert Legal
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-2xl bg-purple-50 p-4">
-                  <div className="rounded-full bg-purple-100 p-2 text-purple-600">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">
-                      Response
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      24-48 Hours
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-2xl bg-green-50 p-4">
-                  <div className="rounded-full bg-green-100 p-2 text-green-600">
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-medium text-gray-500">
-                      Availability
-                    </p>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Mon - Sat
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Included Services */}
-            <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-gray-100">
-              <h2 className="mb-6 text-xl font-bold text-gray-900">
-                What's Included
-              </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {service.categories.map((category, index) => (
-                  <div
-                    key={index}
-                    className="group flex items-start gap-4 rounded-2xl border border-gray-100 p-4 transition-all hover:border-blue-200 hover:bg-blue-50/50 hover:shadow-sm"
-                  >
-                    <div className="mt-1 rounded-full bg-green-100 p-1.5 text-green-600 group-hover:bg-green-500 group-hover:text-white transition-colors">
-                      <Check className="h-3 w-3" />
+            {/* Features / Categories */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">What's Included</h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {service.categories.map((cat, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-4 rounded-xl border border-gray-100 hover:border-blue-100 hover:bg-blue-50/30 transition-colors">
+                    <div className="bg-green-100 text-green-600 p-1.5 rounded-full shrink-0 mt-0.5">
+                      <Check className="w-3.5 h-3.5" />
                     </div>
-                    <span className="font-medium text-gray-700 group-hover:text-blue-900">
-                      {category}
-                    </span>
+                    <span className="text-gray-700 font-medium text-sm">{cat}</span>
                   </div>
                 ))}
               </div>
             </div>
+
           </div>
 
-          {/* Right Column: Sticky Booking Card */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8 rounded-3xl bg-white p-6 shadow-xl ring-1 ring-gray-100 border-t-4 border-blue-600">
-              <div className="mb-6 rounded-2xl bg-gradient-to-br from-gray-50 to-blue-50 p-4 text-center">
-                <p className="text-sm text-gray-500">Ready to proceed?</p>
-                <p className="text-lg font-bold text-gray-900">
-                  Book a Consultation
-                </p>
-              </div>
+          {/* Right Column: Trust Indicators / Info */}
+          <div className="space-y-6">
+            <div className="bg-blue-50/50 rounded-2xl p-6 border border-blue-100">
+              <h4 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
+                <Shield className="w-5 h-5" /> Why Choose Us?
+              </h4>
+              <ul className="space-y-3">
+                {["Top Rated Lawyers", "Confidential & Secure", "Affordable transparent pricing", "End-to-end support"].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check className="h-5 w-5 text-green-500" />
-                  <span>Professional Guidance</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check className="h-5 w-5 text-green-500" />
-                  <span>Secure & Confidential</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <Check className="h-5 w-5 text-green-500" />
-                  <span>Expert Support</span>
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <button
-                  onClick={handleBookNow}
-                  className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-4 text-base font-bold text-white shadow-lg transition-all hover:from-amber-600 hover:to-orange-700 hover:shadow-xl active:scale-95"
-                >
-                  Book Now
-                </button>
-                <p className="mt-4 text-center text-xs text-gray-400">
-                  By booking, you agree to our terms of service.
-                </p>
-              </div>
+            <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 text-white text-center">
+              <h4 className="font-bold text-lg mb-2">Need Immediate Help?</h4>
+              <p className="text-gray-400 text-sm mb-4">Our legal experts are available to guide you.</p>
+              <button onClick={handleBookNow} className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-100 transition-colors text-sm">
+                Contact Now
+              </button>
             </div>
           </div>
+
         </div>
       </div>
 
-      {/* User Registration Form Modal */}
+      {/* --- Modals (Registration & Booking) --- */}
+
+      {/* Registration Modal */}
       {showRegistrationForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
-          <div className="w-full max-w-md transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all">
-            <div className="p-6 md:p-8">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
-                <User className="h-10 w-10 text-blue-600" />
-              </div>
-
-              <h3 className="mb-3 text-center text-2xl font-bold text-gray-900">
-                Register to Continue
-              </h3>
-
-              <p className="mb-6 text-center text-gray-600">
-                Please provide your details to check traffic challans
-              </p>
-
-              {/* Success Message */}
-              {registrationSuccess && (
-                <div className="mb-6 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 p-4">
-                  <Check className="h-5 w-5 text-green-600" />
-                  <span className="text-sm text-green-700">
-                    Registration successful! You can now search for challans.
-                  </span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-xl text-gray-900">Register</h3>
+              <button onClick={() => setShowRegistrationForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              {registrationSuccess ? (
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
+                    <Check className="w-8 h-8" />
+                  </div>
+                  <h4 className="text-xl font-bold text-gray-900">Registration Complete</h4>
+                  <p className="text-gray-500 mt-2">You can now proceed with your request.</p>
+                  <button onClick={() => setShowRegistrationForm(false)} className="mt-6 text-blue-600 font-bold text-sm">Close</button>
                 </div>
+              ) : (
+                <>
+                  {registrationError && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg">{registrationError}</div>}
+                  <FormInput value={userName} onChange={e => setUserName(e.target.value)} placeholder="Full Name" icon={User} />
+                  <FormInput value={userEmail} onChange={e => setUserEmail(e.target.value)} placeholder="Email Address" icon={Mail} />
+                  <FormInput value={userCity} onChange={e => setUserCity(e.target.value)} placeholder="City" icon={HomeIcon} />
+                  <FormInput value={userPhone} onChange={e => setUserPhone(e.target.value)} placeholder="Phone Number" icon={Phone} maxLength={10} />
+
+                  <PrimaryButton
+                    onClick={handleRegisterUser}
+                    disabled={registering}
+                    className="bg-blue-600 hover:bg-blue-700 mt-4"
+                  >
+                    {registering ? "Registering..." : "Register & Continue"}
+                  </PrimaryButton>
+                </>
               )}
-
-              {/* Error Message */}
-              {registrationError && !registrationSuccess && (
-                <div className="mb-6 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-4">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                  <span className="text-sm text-red-700">
-                    {registrationError}
-                  </span>
-                </div>
-              )}
-
-              {/* Registration Form */}
-              <div className="space-y-4">
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Full Name <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      placeholder="Enter your full name"
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3.5 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="email"
-                      value={userEmail}
-                      onChange={(e) => setUserEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3.5 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    City <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <HomeIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={userCity}
-                      onChange={(e) => setUserCity(e.target.value)}
-                      placeholder="Enter your City"
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3.5 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="tel"
-                      value={userPhone}
-                      onChange={(e) => setUserPhone(e.target.value)}
-                      placeholder="Enter 10-digit phone number"
-                      maxLength={10}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3.5 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleRegisterUser}
-                  disabled={registering}
-                  className="w-full rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 py-3.5 text-base font-bold text-white shadow-lg hover:from-blue-600 hover:to-blue-700 hover:shadow-xl active:scale-95 disabled:opacity-50"
-                >
-                  {registering ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader className="h-4 w-4 animate-spin" />
-                      Registering...
-                    </span>
-                  ) : (
-                    "Register & Continue"
-                  )}
-                </button>
-              </div>
-
-              <div className="mt-6 flex justify-center">
-                <button
-                  onClick={handleCloseRegistration}
-                  className="text-sm font-medium text-gray-500 hover:text-gray-700"
-                >
-                  {registrationSuccess ? "Close" : "Cancel"}
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -1034,180 +719,76 @@ export default function ServiceDetail() {
 
       {/* Booking Form Modal */}
       {showBookingForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-all">
-          <div className="w-full max-w-2xl transform overflow-hidden rounded-3xl bg-white shadow-2xl transition-all max-h-[90vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="border-b border-gray-100 bg-gray-50/50 p-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Book {service.name}
-              </h2>
-              <p className="text-sm text-gray-500">
-                Complete the details below to schedule your service.
-              </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-xl text-gray-900">Book Consultation</h3>
+                <p className="text-sm text-gray-500">{service.name}</p>
+              </div>
+              <button onClick={() => setShowBookingForm(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 md:p-8">
-              {/* Status Message */}
+            <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar space-y-6">
               {bookingStatus && (
-                <div
-                  className={`mb-6 flex items-center gap-3 rounded-2xl border p-4 text-sm ${
-                    bookingStatus === "success"
-                      ? "border-green-200 bg-green-50 text-green-800"
-                      : "border-red-200 bg-red-50 text-red-700"
-                  }`}
-                >
-                  {bookingStatus === "success" ? (
-                    <div className="rounded-full bg-green-100 p-1">
-                      <Check className="h-4 w-4 text-green-600" />
-                    </div>
-                  ) : (
-                    <div className="rounded-full bg-red-100 p-1">
-                      <AlertCircle className="h-4 w-4 text-red-600" />
-                    </div>
-                  )}
-                  <span className="font-medium">{bookingMessage}</span>
+                <div className={`p-4 rounded-xl text-sm font-medium ${bookingStatus === "success" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+                  {bookingMessage}
                 </div>
               )}
 
-              <div className="space-y-6">
-                {/* Phone Number */}
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      placeholder="Enter your phone number"
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3.5 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Contact Number <span className="text-red-500">*</span></label>
+                  <FormInput value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} placeholder="10 Digit Mobile Number" icon={Phone} maxLength={10} />
                 </div>
-
-                {/* Description */}
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Additional Details
-                  </label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Additional Details</label>
                   <div className="relative">
-                    <FileText className="absolute left-4 top-4 h-5 w-5 text-gray-400" />
                     <textarea
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Describe your specific requirements or questions..."
-                      rows={4}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 pl-12 pr-4 py-3.5 text-sm font-medium outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 resize-none"
+                      onChange={e => setDescription(e.target.value)}
+                      placeholder="Briefly describe your issue..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none h-[52px] resize-none"
                     />
                   </div>
                 </div>
+              </div>
 
-                {/* Select Services */}
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Select Services <span className="text-red-500">*</span>
-                  </label>
-                  <div className="grid gap-2 sm:grid-cols-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    {service.categories.map((category, index) => (
-                      <label
-                        key={index}
-                        className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-all ${
-                          selectedCategories.includes(category)
-                            ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                            : "border-gray-200 hover:bg-gray-50"
-                        }`}
-                      >
-                        <div
-                          className={`flex h-5 w-5 items-center justify-center rounded border ${
-                            selectedCategories.includes(category)
-                              ? "border-blue-500 bg-blue-500"
-                              : "border-gray-300 bg-white"
-                          }`}
-                        >
-                          {selectedCategories.includes(category) && (
-                            <Check className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={selectedCategories.includes(category)}
-                          onChange={() => handleCategoryToggle(category)}
-                          className="hidden"
-                        />
-                        <span
-                          className={`text-sm font-medium ${
-                            selectedCategories.includes(category)
-                              ? "text-blue-700"
-                              : "text-gray-700"
-                          }`}
-                        >
-                          {category}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-3">Select Required Services <span className="text-red-500">*</span></label>
+                <div className="grid sm:grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-1">
+                  {service.categories.map((cat, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => handleCategoryToggle(cat)}
+                      className={`cursor-pointer p-3 rounded-xl border flex items-center gap-3 transition-all ${selectedCategories.includes(cat) ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500" : "border-gray-200 hover:border-gray-300"}`}
+                    >
+                      <div className={`w-5 h-5 rounded border flex items-center justify-center ${selectedCategories.includes(cat) ? "bg-blue-500 border-blue-500" : "bg-white border-gray-300"}`}>
+                        {selectedCategories.includes(cat) && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <span className={`text-sm font-medium ${selectedCategories.includes(cat) ? "text-blue-900" : "text-gray-600"}`}>{cat}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="border-t border-gray-100 bg-gray-50/50 p-6">
-              <div className="flex gap-4">
-                <button
-                  onClick={() => {
-                    setShowBookingForm(false);
-                    setBookingStatus("");
-                  }}
-                  disabled={booking}
-                  className="flex-1 rounded-xl border border-gray-200 bg-white py-3.5 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-                >
-                  Cancel
+            <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-4">
+              <button onClick={() => setShowBookingForm(false)} className="flex-1 py-3.5 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors">Cancel</button>
+              {bookingStatus === "success" ? (
+                <button onClick={() => window.open(`https://wa.me/919711840150`, '_blank')} className="flex-1 py-3.5 rounded-xl font-bold bg-green-500 text-white hover:bg-green-600 shadow-lg flex items-center justify-center gap-2">
+                  <Phone className="w-4 h-4" /> Open WhatsApp
                 </button>
-                {bookingStatus === "success" ? (
-                  <button
-                    onClick={() => {
-                      const targetNumber = service.number
-                        ? service.number.replace(/\D/g, "")
-                        : "919711840150";
-                      const message = encodeURIComponent(
-                        `Hi, I just booked *${service.name}*.\n\n*My Details:*\nPhone: ${phoneNumber}\nServices: ${selectedCategories.join(
-                          ", ",
-                        )}\nNote: ${description}`,
-                      );
-                      window.open(
-                        `https://wa.me/${targetNumber}?text=${message}`,
-                        "_blank",
-                      );
-                    }}
-                    className="flex-1 rounded-xl bg-green-500 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-green-600 transition-all hover:shadow-xl active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <Phone className="h-4 w-4" />
-                    Open WhatsApp
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSubmitBooking}
-                    disabled={booking}
-                    className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 py-3.5 text-sm font-bold text-white shadow-lg hover:bg-gray-900 disabled:opacity-50 transition-all hover:shadow-xl active:scale-95"
-                  >
-                    {booking ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <Loader className="h-4 w-4 animate-spin" />
-                        Processing...
-                      </span>
-                    ) : (
-                      "Confirm Booking"
-                    )}
-                  </button>
-                )}
-              </div>
+              ) : (
+                <PrimaryButton onClick={handleSubmitBooking} disabled={booking} className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 flex-1">
+                  {booking ? "Processing..." : "Confirm Booking"}
+                </PrimaryButton>
+              )}
             </div>
           </div>
         </div>
       )}
+
     </main>
   );
 }
