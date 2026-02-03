@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHome, FaMapMarkerAlt, FaRegSmile, FaStar } from "react-icons/fa";
+import { FaHome, FaMapMarkerAlt, FaRegSmile, FaStar, FaUserCheck, FaGavel } from "react-icons/fa";
 import { ChevronDown, Check } from "lucide-react";
 import TopRatedProfiles from "../components/TopRatedProfiles";
 import BrowseByCategory from "../components/BrowseByCategory";
@@ -383,9 +383,9 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-[100dvh] bg-white pb-safe pt-safe">
+    <main className="min-h-[100dvh] bg-white pb-safe pt-safe overflow-visible">
       {/* Hero Section */}
-      <section className="relative w-full overflow-hidden min-h-[380px] md:min-h-[600px]">
+      <section className="relative w-full min-h-[380px] md:min-h-[600px] pb-20 md:pb-8">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
@@ -402,11 +402,11 @@ export default function Home() {
         <div className="relative mx-auto max-w-screen-xl px-4 py-8 sm:px-6 md:py-20 lg:py-24">
           <div className="max-w-2xl">
             <h1 className="mb-4 text-3xl font-bold leading-tight text-white md:text-4xl lg:text-5xl xl:text-6xl drop-shadow-lg">
-              Find the Right Legal Expertise
+              Find the Right Advocate for Your Legal Issue
             </h1>
 
             <p className="mb-6 text-lg text-gray-100 lg:text-xl ">
-              Litigation • Advisory • Documentation
+              Select your legal category and city to connect with relevant legal professionals.
             </p>
             {/* Search bar */}
             <form
@@ -452,7 +452,7 @@ export default function Home() {
                   </div>
 
                   {cityDropdownOpen && filteredCities.length > 0 && (
-                    <div className="absolute top-full z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-xl max-h-60 overflow-y-auto">
+                    <div className="absolute top-full z-[100] mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-2xl max-h-60 overflow-y-auto">
                       {filteredCities.map((c) => (
                         <button
                           key={c}
@@ -470,29 +470,33 @@ export default function Home() {
                   )}
                 </div>
 
-                {/* Search Button */}
+                {/* Find Advocates Button */}
                 <button
                   type="submit"
                   className="h-12 w-full rounded-xl bg-[#FFA800] px-6 text-sm font-semibold text-black transition-all hover:bg-[#FFB524] hover:shadow-lg active:scale-95 lg:min-w-[160px]"
                 >
-                  Search Now!
+                  Find Advocates
                 </button>
               </div>
             </form>
 
-            {/* Stats Highlights */}
-            <div className="mt-8 hidden md:flex flex-wrap gap-3 lg:gap-4">
+            {/* Stats Highlights - Hide when dropdown is open */}
+            <div className={`relative z-10 mt-8 hidden md:flex flex-wrap gap-3 lg:gap-4 transition-opacity duration-200 ${cityDropdownOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
               <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2.5 text-sm backdrop-blur-md border border-white/30">
-                <FaHome className="h-4 w-4 text-white" />
-                <span className="text-white">2M+ Profiles</span>
+                <FaUserCheck className="h-4 w-4 text-white" />
+                <span className="text-white">200+ Verified Advocates</span>
               </div>
               <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2.5 text-sm backdrop-blur-md border border-white/30">
-                <FaRegSmile className="h-4 w-4 text-white" />
-                <span className="text-white">46K+ Clients</span>
+                <FaMapMarkerAlt className="h-4 w-4 text-white" />
+                <span className="text-white">50+ Cities covered</span>
               </div>
               <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2.5 text-sm backdrop-blur-md border border-white/30">
-                <FaStar className="h-4 w-4 text-white" />
-                <span className="text-white">4.8 Rating</span>
+                <FaGavel className="h-4 w-4 text-white" />
+                <span className="text-white">10+ Legal Categories</span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full bg-white/20 px-4 py-2.5 text-sm backdrop-blur-md border border-white/30">
+                <FaStar className="h-4 w-4 text-[#FFA800]" />
+                <span className="text-white">4.9/5 Rating</span>
               </div>
             </div>
           </div>

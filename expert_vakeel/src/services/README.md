@@ -11,7 +11,7 @@ This directory contains the centralized API service for the Expert Vakeel applic
 ## Base Configuration
 
 The API service is configured to connect to:
-- **Development**: `http://localhost:4000`
+- **Development**: `https://api.legalnetwork.in`
 - **Production**: Update the `baseURL` in the axios instance
 
 ## Available API Modules
