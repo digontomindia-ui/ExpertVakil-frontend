@@ -243,7 +243,7 @@ export default function ServiceDetail() {
         city: formCity || "all"
       });
 
-      if (response.data.success) {
+      if (response.data && Array.isArray(response.data.data)) {
         setAdvocates(response.data.data);
       }
     } catch (err) {

@@ -4,7 +4,7 @@ import { API_URLS } from "../../config/api";
 
 /**
  * QueriesCenter.tsx (Next.js, TypeScript)
- * - Fetches queries from http://localhost:4000/api/queries/
+ * - Fetches queries from https://api.legalnetwork.in/api/queries/
  * - Handles mixed shapes (legacy + new) and normalizes them
  * - Search, filters (category, source, target, visibility), sort (Newest, Most Answered)
  * - Responsive grid list; click card → slide-over details
@@ -205,13 +205,13 @@ export default function QueriesCenter() {
                   placeholder="Search queries…"
                   className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
                 />
-                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
               </div>
               <Select value={category} onChange={setCategory} label="Category" options={categories} />
               <Select value={source} onChange={setSource} label="Source" options={sources} />
               <Select value={target} onChange={setTarget} label="Target" options={targets} />
-              <Select value={visibility} onChange={setVisibility} label="Visibility" options={["all","public","private"]} />
-              <Select value={sortBy} onChange={(v) => setSortBy(v as any)} label="Sort" options={["newest","answers"]} />
+              <Select value={visibility} onChange={setVisibility} label="Visibility" options={["all", "public", "private"]} />
+              <Select value={sortBy} onChange={(v) => setSortBy(v as any)} label="Sort" options={["newest", "answers"]} />
             </div>
           </div>
         </div>
@@ -335,7 +335,7 @@ function Spinner() {
 function EmptyState({ onReset }: { onReset: () => void }) {
   return (
     <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white"><SearchIcon className="h-5 w-5"/></div>
+      <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white"><SearchIcon className="h-5 w-5" /></div>
       <h3 className="text-lg font-semibold text-slate-900">No queries found</h3>
       <p className="mt-1 text-sm text-slate-600">Try clearing filters or searching a different term.</p>
       <button onClick={onReset} className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90">Reset</button>
@@ -346,16 +346,16 @@ function EmptyState({ onReset }: { onReset: () => void }) {
 // --- inline icons ---
 function CloseIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M6 18L18 6"/></svg>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 6l12 12M6 18L18 6" /></svg>
   );
 }
 function SearchIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
   );
 }
 function AnswersIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /></svg>
   );
 }
