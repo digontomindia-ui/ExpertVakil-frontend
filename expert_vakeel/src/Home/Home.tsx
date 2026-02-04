@@ -2,8 +2,8 @@
 
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaHome, FaMapMarkerAlt, FaRegSmile, FaStar, FaUserCheck, FaGavel } from "react-icons/fa";
-import { ChevronDown, Check } from "lucide-react";
+import { FaHome, FaMapMarkerAlt, FaRegSmile, FaStar, FaUserCheck, FaGavel, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { ChevronDown, Check, ArrowRight } from "lucide-react";
 import TopRatedProfiles from "../components/TopRatedProfiles";
 import BrowseByCategory from "../components/BrowseByCategory";
 import WhyExpertVakeel from "../components/whyexpertVakeel";
@@ -504,12 +504,12 @@ export default function Home() {
       </section>
 
       {/* Navigation Buttons Section */}
-      <section className="sm:mx-auto sm:max-w-screen-xl py-8 sm:px-6 sm:py-10 md:py-12">
-        <div className="sm:ml-10 mb-8 px-4">
-          <h2 className="text-2xl md:text-4xl font-bold text-gray-900 mb-2">
+      <section className="sm:mx-auto sm:max-w-screen-xl py-6 sm:py-10 md:py-12">
+        <div className="sm:ml-10 mb-6 sm:mb-8 px-4">
+          <h2 className="text-xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">
             Explore Our Services
           </h2>
-          <p className="text-gray-600 text-sm md:text-base">
+          <p className="hidden sm:block text-gray-600 text-sm md:text-base">
             Access all our legal services and resources in one place
           </p>
         </div>
@@ -522,121 +522,147 @@ export default function Home() {
       <BrowseByCategory onCategoryClick={handleCategoryClick} />
 
       {/* Explore Or Ask Legal Queries */}
-      <section className="mx-auto max-w-screen-xl px-4 py-6 sm:px-6 sm:py-8 md:py-10 lg:py-12">
-        {/* Header */}
-        <div className="mb-5 text-center sm:mb-8 md:mb-10">
-          <h2 className="font-bold leading-tight tracking-tight text-black text-[clamp(22px,6vw,40px)]">
-            Explore Or Ask Legal Queries
-          </h2>
-          <p className="mt-2 text-xs text-gray-500 sm:text-sm md:text-base">
-            Get Your Query Answered By Lawyers &amp; Firms
-          </p>
-        </div>
+      <section className="relative overflow-hidden bg-[#FBFBFB] py-16 sm:py-24">
+        {/* Background Decorative Element */}
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 h-64 w-64 rounded-full bg-[#FFA800]/5 blur-3xl pointer-events-none" />
 
-        {/* Controls + Row */}
-        <div className="relative">
-          {/* Left button (hidden on very small screens to avoid covering cards) */}
-          <button
-            aria-label="Scroll left"
-            onClick={() => scrollBy("left")}
-            className="absolute left-[-6px] top-1/2 z-10 hidden -translate-y-1/2 select-none items-center justify-center rounded-full border border-gray-200 bg-white shadow transition-colors hover:bg-gray-50 sm:flex h-9 w-9"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24">
-              <path
-                d="M15 18l-6-6 6-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            </svg>
-          </button>
-
-          {/* Cards scroller */}
-          <div
-            ref={scrollerRef}
-            className="flex gap-3 overflow-x-auto pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 md:gap-5"
-          >
-            {isLoading ? (
-              Array.from({ length: 6 }).map((_, idx) => (
-                <div
-                  key={`loading-${idx}`}
-                  className="min-w-[220px] max-w-[260px] rounded-2xl border bg-white px-3 py-3 shadow-sm ring-1 ring-transparent [border-color:#D9F4E0] sm:min-w-[240px] sm:max-w-[280px] md:min-w-[280px] md:max-w-[320px] animate-pulse"
-                >
-                  <div className="mb-2 h-4 rounded bg-gray-200" />
-                  <div className="mb-1 h-4 rounded bg-gray-200" />
-                  <div className="mb-3 h-4 w-3/4 rounded bg-gray-200" />
-                  <div className="flex justify-between">
-                    <div className="h-6 w-20 rounded bg-gray-200" />
-                    <div className="h-4 w-16 rounded bg-gray-200" />
-                  </div>
-                  <div className="mt-3 flex justify-between">
-                    <div className="h-3 w-16 rounded bg-gray-200" />
-                    <div className="h-3 w-20 rounded bg-gray-200" />
-                  </div>
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6">
+          {/* Header */}
+          <div className="mb-10 sm:mb-16">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+              <div className="max-w-xl text-left">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="h-2 w-2 rounded-full bg-[#FFA800] animate-pulse" />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#FFA800]">
+                    Legal Forum & Community
+                  </span>
                 </div>
-              ))
-            ) : (
-              <>
-                {(filteredQueries.length
-                  ? filteredQueries
-                  : processedQueries
-                ).map((item, idx) => (
-                  <article
-                    key={`${item.id}-${idx}`}
-                    className="min-w-[220px] max-w-[260px] rounded-xl border bg-white px-3 py-3 transition-all hover:scale-[1.01] hover:shadow-md [border-color:#D9F4E0] sm:min-w-[240px] sm:max-w-[280px] sm:rounded-2xl sm:px-3.5 sm:py-3.5 md:min-w-[280px] md:max-w-[320px] md:px-4 md:py-4"
-                  >
-                    <h3 className="line-clamp-3 text-sm font-semibold leading-tight text-black sm:text-[16px] md:text-[17px]">
-                      {item.title}
-                    </h3>
-                    <p className="line-clamp-3 text-sm text-grey-200">
-                      {item.description}
-                    </p>
-
-                    <div className="mt-3 flex items-center justify-between sm:mt-4">
-                      <button
-                        onClick={() => handleAnswerQuery(item.id)}
-                        className="rounded-full bg-black px-3 py-1.5 text-[11px] font-semibold text-white transition-opacity hover:opacity-90 sm:px-4 sm:text-[12px]"
-                      >
-                        Answer / Reply
-                      </button>
-                      <span className="text-[11px] text-gray-500 sm:text-[12px]">
-                        {item.answers} Answers
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between text-[10px] text-gray-500 sm:mt-4 sm:text-[11px]">
-                      <span>
-                        Asked by{" "}
-                        <span className="text-gray-700">
-                          {item.askedBy || "Lawyer"}
-                        </span>
-                      </span>
-                      <span>{item.timeAgo}</span>
-                    </div>
-                  </article>
-                ))}
-
-                {/* A small buffer at the end so last card isn't flush with edge */}
-                <div className="min-w-[8px] sm:min-w-[12px]" />
-              </>
-            )}
+                <h2 className="text-3xl font-black tracking-tight text-gray-900 sm:text-5xl">
+                  Explore Or Ask <span className="text-[#FFA800]">Queries</span>
+                </h2>
+                <p className="mt-4 text-sm sm:text-lg text-gray-500 font-medium">
+                  Get expert legal advice and insights from verified advocates and law firms across India.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate('/queries')}
+                className="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 hover:border-[#FFA800]/20 hover:shadow-md"
+              >
+                View All Community <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 text-[#FFA800]" />
+              </button>
+            </div>
           </div>
 
-          {/* Right button */}
-          <button
-            aria-label="Scroll right"
-            onClick={() => scrollBy("right")}
-            className="absolute right-[-6px] top-1/2 z-10 hidden -translate-y-1/2 select-none items-center justify-center rounded-full border border-gray-200 bg-white shadow transition-colors hover:bg-gray-50 sm:flex h-9 w-9"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24">
-              <path
-                d="M9 6l6 6-6 6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            </svg>
-          </button>
+          {/* Controls + Row */}
+          <div className="relative">
+            {/* Navigation Buttons */}
+            <div className="absolute -top-24 right-0 hidden items-center gap-2 sm:flex">
+              <button
+                aria-label="Scroll left"
+                onClick={() => scrollBy("left")}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm transition-all hover:bg-[#FFA800] hover:text-white hover:shadow-lg active:scale-95"
+              >
+                <FaChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                aria-label="Scroll right"
+                onClick={() => scrollBy("right")}
+                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm transition-all hover:bg-[#FFA800] hover:text-white hover:shadow-lg active:scale-95"
+              >
+                <FaChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Cards scroller */}
+            <div
+              ref={scrollerRef}
+              className="flex gap-4 overflow-x-auto pb-8 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-6"
+            >
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <div
+                    key={`query-loading-${idx}`}
+                    className="min-w-[280px] max-w-[320px] rounded-3xl bg-white p-6 shadow-sm border border-gray-100 animate-pulse"
+                  >
+                    <div className="mb-4 h-5 w-1/3 rounded-full bg-gray-100" />
+                    <div className="mb-3 h-6 w-full rounded bg-gray-100" />
+                    <div className="mb-6 h-4 w-3/4 rounded bg-gray-100" />
+                    <div className="flex justify-between items-center">
+                      <div className="h-10 w-24 rounded-full bg-gray-100" />
+                      <div className="h-4 w-16 rounded bg-gray-100" />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <>
+                  {(filteredQueries.length ? filteredQueries : processedQueries).map((item, idx) => (
+                    <article
+                      key={`${item.id}-${idx}`}
+                      className="group relative min-w-[280px] max-w-[320px] flex flex-col rounded-3xl bg-white p-6 transition-all duration-500 border border-gray-100 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] hover:-translate-y-2 hover:border-[#FFA800]/20 sm:min-w-[340px] sm:p-8"
+                    >
+                      {/* Category Badge */}
+                      <div className="mb-5 flex items-center justify-between">
+                        <span className="inline-flex rounded-full bg-orange-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#FFA800]">
+                          {item.category}
+                        </span>
+                        <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#FFA800]/10 transition-colors">
+                          <FaRegSmile className="h-4 w-4 text-gray-400 group-hover:text-[#FFA800]" />
+                        </div>
+                      </div>
+
+                      <div className="flex-grow">
+                        <h3 className="line-clamp-2 text-lg font-bold leading-tight text-gray-900 transition-colors group-hover:text-[#FFA800] sm:text-xl">
+                          {item.title}
+                        </h3>
+                        <p className="mt-3 line-clamp-3 text-sm text-gray-500 leading-relaxed font-medium">
+                          {item.description}
+                        </p>
+                      </div>
+
+                      <div className="mt-8">
+                        {/* Meta Info */}
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border-2 border-white shadow-sm flex items-center justify-center font-bold text-gray-500 text-xs uppercase">
+                            {item.askedBy?.[0] || 'L'}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-[12px] font-bold text-gray-900 line-clamp-1">
+                              {item.askedBy || "Verified User"}
+                            </span>
+                            <span className="text-[11px] font-medium text-gray-400">
+                              {item.timeAgo}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action + Answers */}
+                        <div className="flex items-center justify-between gap-4">
+                          <button
+                            onClick={() => handleAnswerQuery(item.id)}
+                            className="flex-grow rounded-2xl bg-gray-900 px-4 py-3 text-xs font-bold text-white transition-all hover:bg-black hover:shadow-lg active:scale-95"
+                          >
+                            Answer / Reply
+                          </button>
+                          <div className="flex flex-col items-center flex-shrink-0">
+                            <span className="text-lg font-black text-[#FFA800]">
+                              {item.answers}
+                            </span>
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-gray-400">
+                              Answers
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Subtle Bottom Glow */}
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1 w-0 bg-[#FFA800] transition-all duration-500 group-hover:w-1/3 rounded-full" />
+                    </article>
+                  ))}
+                  <div className="min-w-[12px]" />
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 

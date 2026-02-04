@@ -71,7 +71,7 @@ export default function Header() {
           {/* Left: Logo (horizontal) */}
           <Link to="/" className="flex shrink-0 items-center">
             <img
-              src="/assets/Group1.png"
+              src="/assets/logo_horizontal.png"
               alt="ExpertVakeel"
               className={`transition-all duration-300 ${isScrolled ? 'h-8' : 'h-10 md:h-12'}`}
               draggable={false}

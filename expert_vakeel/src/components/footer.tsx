@@ -17,30 +17,34 @@ type Item =
 type Column = { title: string; items: Item[] };
 
 const COLUMNS: Column[] = [
-  { title: "Find By Services", items: [ "Cheque Bounce Cases","Property Dispute Cases","Money Recovery Disputes","Mutual Consent Divorce Cases","Maternity Benefit Cases","Family Property Dispute Cases","Landlord Tenant Disputes","Name Change Cases","Succession Certificate","Defamation Cases","Theft / Robbery","Summons / Warrants","Will Drafting","Power Of Attorney","Labour Union Matters","Service Matters" ]},
-  { title: "Queries", items: [
-    { label: "Ask Legal Queries", to: "/querypage" },
-    { label: "Explore Answered Queries", to: "/querypage" },
-    { label: "Family Matters Queries", to: "/querypage" },
-    { label: "High Court Queries", to: "/querypage" },
-    { label: "Supreme Court Queries", to: "/querypage" },
-    { label: "Civil Matters Queries", to: "/querypage" },
-    { label: "Criminal Matters Queries", to: "/querypage" },
-    { label: "Taxation Matters Queries", to: "/querypage" },
-    { label: "View All", to: "/querypage" }
-  ]},
-  { title: "Find By Specialization", items: [ "Family Matters","Criminal Matters","Supreme Court Matters","Labour / Employee Matters","Taxation Matters","Documentation & Registrations","Trademark & Copyright Matters","Forums & Tribunal Matters","Business Matters","High Court Matters","Civil Matters" ]},
-  { title: "Find By City", items: [ "Lawyers In New Delhi","Lawyers In Mumbai","Lawyers In Pune","Lawyers In Noida","Lawyers In Gurugram","Lawyers In Chennai","Lawyers In Kolkata","Lawyers In Chandigarh","Lawyers In NCR" ]},
-  { title: "Quick Links", items: [
-    { label: "My Queries", to: "/querypage" },
-    { label: "About Expert Vakeel", to: "/about" },
-    { label: "Privacy Policy", to: "/privacypolicy", external: false },
-    { label: "Terms Of Use", href: "#", external: false },
-    { label: "Help & Support", to: "/support" },
-    { label: "Blogs", to: "/blogs" },
-    { label: "FAQs", to: "/support" },
-    { label: "Download Our App For Lawyers", href: "#", external: false }
-  ]},
+  { title: "Find By Services", items: ["Cheque Bounce Cases", "Property Dispute Cases", "Money Recovery Disputes", "Mutual Consent Divorce Cases", "Maternity Benefit Cases", "Family Property Dispute Cases", "Landlord Tenant Disputes", "Name Change Cases", "Succession Certificate", "Defamation Cases", "Theft / Robbery", "Summons / Warrants", "Will Drafting", "Power Of Attorney", "Labour Union Matters", "Service Matters"] },
+  {
+    title: "Queries", items: [
+      { label: "Ask Legal Queries", to: "/querypage" },
+      { label: "Explore Answered Queries", to: "/querypage" },
+      { label: "Family Matters Queries", to: "/querypage" },
+      { label: "High Court Queries", to: "/querypage" },
+      { label: "Supreme Court Queries", to: "/querypage" },
+      { label: "Civil Matters Queries", to: "/querypage" },
+      { label: "Criminal Matters Queries", to: "/querypage" },
+      { label: "Taxation Matters Queries", to: "/querypage" },
+      { label: "View All", to: "/querypage" }
+    ]
+  },
+  { title: "Find By Specialization", items: ["Family Matters", "Criminal Matters", "Supreme Court Matters", "Labour / Employee Matters", "Taxation Matters", "Documentation & Registrations", "Trademark & Copyright Matters", "Forums & Tribunal Matters", "Business Matters", "High Court Matters", "Civil Matters"] },
+  { title: "Find By City", items: ["Lawyers In New Delhi", "Lawyers In Mumbai", "Lawyers In Pune", "Lawyers In Noida", "Lawyers In Gurugram", "Lawyers In Chennai", "Lawyers In Kolkata", "Lawyers In Chandigarh", "Lawyers In NCR"] },
+  {
+    title: "Quick Links", items: [
+      { label: "My Queries", to: "/querypage" },
+      { label: "About Expert Vakeel", to: "/about" },
+      { label: "Privacy Policy", to: "/privacypolicy", external: false },
+      { label: "Terms Of Use", href: "#", external: false },
+      { label: "Help & Support", to: "/support" },
+      { label: "Blogs", to: "/blogs" },
+      { label: "FAQs", to: "/support" },
+      { label: "Download Our App For Lawyers", href: "#", external: false }
+    ]
+  },
 ];
 
 const SOCIAL = [
@@ -80,7 +84,7 @@ export default function Footer() {
             <div className="flex flex-wrap items-center gap-3">
               {SOCIAL.map(({ label, icon: Icon, href }) => (
                 <a key={label} href={href} aria-label={label}
-                   className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-gray-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30">
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-gray-200 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30">
                   <Icon className="h-4 w-4" />
                 </a>
               ))}
@@ -89,9 +93,19 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-white/10">
-        <div className={`${WRAP} py-4 text-center text-[11px] sm:text-xs text-gray-400`}>
-          Copyright 2025 By Expert Vakeel. Powered By Legal Network. All Rights Reserved
+      <div className="border-t border-white/5 bg-[#080808] relative overflow-hidden">
+        {/* Subtle Brand Accent */}
+        <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-transparent via-[#FFA800]/50 to-transparent opacity-30" />
+
+        <div className={`${WRAP} py-6 sm:py-8`}>
+          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+            <p className="text-[11px] sm:text-xs font-medium text-gray-500 tracking-wide">
+              © {new Date().getFullYear()} <span className="text-white">Expert Vakil</span>. All Rights Reserved.
+            </p>
+            <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-gray-600">
+              Powered By <span className="text-[#FFA800]">Legal Network</span>
+            </p>
+          </div>
         </div>
       </div>
     </footer>
@@ -179,8 +193,8 @@ const Column = memo(function Column({ title, items }: Column) {
             return (
               <li key={obj.label} className="min-w-0">
                 <a href={obj.href} rel={obj.external ? "noopener noreferrer" : undefined}
-                   target={obj.external ? "_blank" : undefined}
-                   className={`${LINK} block`}>{obj.label}</a>
+                  target={obj.external ? "_blank" : undefined}
+                  className={`${LINK} block`}>{obj.label}</a>
               </li>
             );
           }

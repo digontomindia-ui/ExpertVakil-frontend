@@ -95,15 +95,15 @@ export default function TopRatedProfiles() {
     setFilteredProfiles(filtered);
   }, [profiles, ratingStats]);
 
-  // --- arrows (components defined inline but not as hooks) ---
+  // --- arrows ---
   const Prev = ({ onClick }: { onClick?: () => void }) => (
     <button
       type="button"
       aria-label="Previous"
       onClick={onClick}
-      className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white p-2 shadow-md transition hover:bg-gray-100"
+      className="absolute -left-2 sm:-left-4 top-1/2 z-20 -translate-y-1/2 rounded-xl bg-white p-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] transition-all duration-300 hover:bg-[#FFA800] hover:text-white group active:scale-95 border border-gray-100/50"
     >
-      <FaChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+      <FaChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
     </button>
   );
 
@@ -112,83 +112,79 @@ export default function TopRatedProfiles() {
       type="button"
       aria-label="Next"
       onClick={onClick}
-      className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white p-2 shadow-md transition hover:bg-gray-100"
+      className="absolute -right-2 sm:-right-4 top-1/2 z-20 -translate-y-1/2 rounded-xl bg-white p-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] transition-all duration-300 hover:bg-[#FFA800] hover:text-white group active:scale-95 border border-gray-100/50"
     >
-      <FaChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+      <FaChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
     </button>
   );
 
-  // --- computed (NOT hooks) so order never changes ---
-  // show 2 on mobile, up to 4 on desktop
+  // --- computed values ---
   const slidesToShow = isDesktop ? Math.min(4, filteredProfiles.length) : Math.min(2, filteredProfiles.length);
-  // infinite only when there are more slides than visible
-  const infinite = isDesktop ? filteredProfiles.length > 4 : filteredProfiles.length > 2;
+  const infinite = filteredProfiles.length > slidesToShow;
 
   const settings = {
     infinite,
-    speed: 500,
+    speed: 600,
     slidesToShow,
-    slidesToScroll: 1, // scroll one card at a time while showing 2 on mobile
+    slidesToScroll: 1,
     arrows: true,
     swipeToSlide: true,
     touchMove: true,
     dots: false,
-    adaptiveHeight: false, // keep consistent heights when showing multiple cards
     nextArrow: <Next />,
     prevArrow: <Prev />,
+    responsive: [
+      {
+        breakpoint: 640,
+        settings: {
+          slidesToShow: 1.2,
+          slidesToScroll: 1,
+          arrows: false,
+          centerMode: true,
+          centerPadding: '20px',
+        }
+      }
+    ] as any[]
   } as const;
 
-  // --- render (early returns AFTER all hooks/computed values) ---
+  // --- render ---
   if (loading) {
     return (
-      <section className="relative w-full bg-white">
-        <div className="relative mx-auto max-w-[1280px] px-3 py-6 sm:px-4 sm:py-8 md:px-6 md:py-12 lg:px-8">
-          <div className="mb-4 text-center sm:mb-6">
-            <h2 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-black sm:text-[28px] md:text-[36px] lg:text-[44px]">
-              Top Rated Profiles
-            </h2>
-            <p className="mt-1 text-xs text-black/60 sm:text-sm">Rated Top By Clients & Users</p>
-          </div>
-          <div className="py-8 text-center sm:py-10">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
-            <p className="mt-2 text-sm text-gray-600 sm:text-base">Loading profiles...</p>
-          </div>
+      <section className="relative w-full bg-[#FBFBFB] py-12 sm:py-20">
+        <div className="mx-auto max-w-[1280px] px-4 text-center">
+          <div className="inline-block h-10 w-10 animate-spin rounded-full border-2 border-[#FFA800] border-t-transparent" />
         </div>
       </section>
     );
   }
 
-  if (!filteredProfiles.length) {
-    return (
-      <section className="relative w-full bg-white">
-        <div className="relative mx-auto max-w-[1280px] px-3 py-6 sm:px-4 sm:py-8 md:px-6 md:py-12 lg:px-8">
-          <div className="mb-4 text-center sm:mb-6">
-            <h2 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-black sm:text-[28px] md:text-[36px] lg:text-[44px]">
-              Top Rated Profiles
-            </h2>
-            <p className="mt-1 text-xs text-black/60 sm:text-sm">Rated Top By Clients & Users</p>
-          </div>
-          <p className="text-center text-sm text-gray-600 sm:text-base">No profiles with rating 4 or higher available right now.</p>
-        </div>
-      </section>
-    );
-  }
+  if (!filteredProfiles.length) return null;
 
   return (
-    <section className="relative w-full bg-white">
-      <div className="relative mx-auto max-w-[1280px] px-3 py-6 sm:px-4 sm:py-8 md:px-6 md:py-12 lg:px-8">
-        <div className="mb-4 text-center sm:mb-6">
-          <h2 className="text-xl font-semibold leading-tight tracking-[-0.02em] text-black sm:text-[28px] md:text-[36px] lg:text-[44px]">
-            Top Rated Profiles
+    <section className="relative w-full bg-gradient-to-b from-white to-[#FBFBFB] py-12 sm:py-20 overflow-hidden">
+      <div className="relative mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        {/* Modern Header */}
+        <div className="mb-10 sm:mb-16 text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="h-px w-8 bg-[#FFA800]/30" />
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#FFA800]">
+              Elite Legal Professionals
+            </span>
+            <div className="h-px w-8 bg-[#FFA800]/30" />
+          </div>
+          <h2 className="text-3xl font-black tracking-tight text-gray-900 sm:text-5xl lg:text-5xl">
+            Top Rated <span className="text-[#FFA800]">Advocates</span>
           </h2>
-          <p className="mt-1 text-xs text-black/60 sm:text-sm">Rated Top By Clients & Users</p>
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-gray-500 sm:text-lg">
+            Connect with the highest-rated legal experts verified for excellence and client satisfaction.
+          </p>
         </div>
 
-        {/* Force re-init when switching mobile<->desktop */}
-        <div className="relative">
-          <Slider key={isDesktop ? "desktop-4" : "mobile-2"} {...settings}>
+        {/* Slider Section */}
+        <div className="relative profile-slider-container">
+          <Slider key={isDesktop ? "desktop" : "mobile"} {...settings}>
             {filteredProfiles.map((p) => (
-              <div key={p.id} className="px-1 sm:px-2">
+              <div key={p.id} className="p-2 sm:p-4 h-full">
                 <ProfileCard profile={p} ratingStats={ratingStats[p.id]} />
               </div>
             ))}

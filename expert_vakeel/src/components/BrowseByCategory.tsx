@@ -7,32 +7,45 @@ type Category = {
 };
 
 const categories: Category[] = [
-  { title: "Civil Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Criminal Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Family Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Labour/Employee Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Taxation Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Documentation & Registration", subtitle: "", image: "/assets/image10.png" },
-  { title: "Trademark & Copyright Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "High Court Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Supreme Court Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Forums and Tribunal Matters", subtitle: "", image: "/assets/image10.png" },
-  { title: "Business Matters", subtitle: "", image: "/assets/image10.png" },
+  { title: "Civil Matters", subtitle: "Property, Contracts, Disputes", image: "/assets/image1.png" },
+  { title: "Criminal Matters", subtitle: "Bail, Defense, Investigation", image: "/assets/image2.png" },
+  { title: "Family Matters", subtitle: "Divorce, Custody, Heritage", image: "/assets/image3.png" },
+  { title: "Labour Matters", subtitle: "Employment, Wages, Disputes", image: "/assets/images4.png" },
+  { title: "Taxation Matters", subtitle: "GST, IT, Corporate Tax", image: "/assets/images5.png" },
+  { title: "Documentation", subtitle: "Agreements, Deeds, Registration", image: "/assets/image6.png" },
+  { title: "Trademark & IP", subtitle: "Copyright, Patents, Brands", image: "/assets/image7.png" },
+  { title: "High Court", subtitle: "Appeals, Writ Petitions", image: "/assets/image8.png" },
+  { title: "Supreme Court", subtitle: "Special Leave Petitions", image: "/assets/image9.png" },
+  { title: "Forums & Tribunal", subtitle: "NCLT, DRT, Consumer Court", image: "/assets/image11.png" },
+  { title: "Business Matters", subtitle: "Startup, Compliance, Mergers", image: "/assets/image12.png" },
 ];
 
-// 🎨 Unique text colors per category
 const titleColors = [
-  "text-[#FF6B6B]", // Civil Matters
-  "text-[#1E90FF]", // Criminal Matters
-  "text-[#FF9F1C]", // Family Matters
-  "text-[#6C63FF]", // Labour/Employee Matters
-  "text-[#2EC4B6]", // Taxation Matters
-  "text-[#FF66B3]", // Documentation
-  "text-[#00B4D8]", // Trademark
-  "text-[#06D6A0]", // High Court
-  "text-[#E85D04]", // Supreme Court
-  "text-[#8AC926]", // Forums
-  "text-[#F15BB5]", // Business
+  "text-rose-500",
+  "text-blue-500",
+  "text-amber-500",
+  "text-indigo-500",
+  "text-emerald-500",
+  "text-pink-500",
+  "text-cyan-500",
+  "text-teal-500",
+  "text-orange-500",
+  "text-lime-500",
+  "text-fuchsia-500",
+];
+
+const bgGradients = [
+  "from-rose-500/10",
+  "from-blue-500/10",
+  "from-amber-500/10",
+  "from-indigo-500/10",
+  "from-emerald-500/10",
+  "from-pink-500/10",
+  "from-cyan-500/10",
+  "from-teal-500/10",
+  "from-orange-500/10",
+  "from-lime-500/10",
+  "from-fuchsia-500/10",
 ];
 
 function CategoryCard({
@@ -43,71 +56,56 @@ function CategoryCard({
   onExplore,
 }: Category & { colorIndex: number; onExplore: (category: string) => void }) {
   const titleColor = titleColors[colorIndex % titleColors.length];
+  const bgGradient = bgGradients[colorIndex % bgGradients.length];
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition">
-      {/* ----- Desktop / Tablet version (with image) ----- */}
-      <div className="hidden sm:block group relative w-full overflow-hidden rounded-2xl">
-        <div className="relative aspect-[4/3] w-full">
-          <img
-            src={image}
-            alt={title}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-            loading="lazy"
-          />
+    <div
+      onClick={() => onExplore(title)}
+      className="group relative cursor-pointer overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-xl hover:border-[#FFA800]/20"
+    >
+      {/* Image Container */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden">
+        <img
+          src={image}
+          alt={title}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          loading="lazy"
+        />
+        {/* Color Overlay Hint */}
+        <div className={`absolute inset-0 bg-gradient-to-t ${bgGradient} to-transparent opacity-60`} />
+      </div>
 
-          {/* White bottom panel */}
-          <div
-            className="
-              absolute bottom-0 right-0 left-0
-              h-1/2 bg-white
-              px-5 pt-3 pb-4
-              [border-top-left-radius:48px]
-            "
-          >
-            <h3 className={`line-clamp-2 text-base font-semibold ${titleColor}`}>
-              {title}
-            </h3>
-            {subtitle && (
-              <p className="mt-1 text-sm text-neutral-600">{subtitle}</p>
-            )}
+      {/* Content Area */}
+      <div className="relative p-4 sm:p-6 bg-white">
+        <div className="flex flex-col gap-1">
+          <h3 className={`text-sm sm:text-lg font-bold leading-tight ${titleColor}`}>
+            {title}
+          </h3>
+          <p className="text-[10px] sm:text-xs text-gray-500 font-medium line-clamp-1 uppercase tracking-wider">
+            {subtitle}
+          </p>
+        </div>
 
-            <div className="mt-3">
-              <button
-                onClick={() => onExplore(title)}
-                className="
-                  inline-block rounded-full px-4 py-2 text-xs font-semibold
-                  text-white bg-[#FFA800]
-                  shadow-sm transition
-                  hover:bg-[#FFB800] hover:translate-y-[-1px] hover:shadow-md
-                "
-              >
-                Explore Now!
-              </button>
-            </div>
+        {/* Action Button - Subtle and Premium */}
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-[11px] sm:text-xs font-semibold text-[#FFA800] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
+            View Experts
+          </span>
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-all duration-300 group-hover:bg-[#FFA800] group-hover:text-white group-hover:rotate-[-45deg]">
+            <svg
+              className="h-4 w-4 sm:h-5 sm:w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
           </div>
         </div>
-        <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-black/5" />
       </div>
 
-      {/* ----- Mobile version (no image) ----- */}
-      <div className="block sm:hidden bg-white px-4 py-5 rounded-2xl shadow-sm text-center">
-        <h3 className={`text-sm font-semibold ${titleColor}`}>{title}</h3>
-        {subtitle && (
-          <p className="mt-1 text-xs text-gray-500 line-clamp-2">{subtitle}</p>
-        )}
-
-        <button
-          onClick={() => onExplore(title)}
-          className="
-            mt-3 w-full rounded-full bg-[#FFA800]
-            px-4 py-2 text-xs font-semibold text-white
-            transition hover:bg-[#FFB800]
-          "
-        >
-          Explore Now!
-        </button>
-      </div>
+      {/* Glow on Hover */}
+      <div className="absolute -inset-px -z-10 rounded-3xl bg-gradient-to-br from-transparent via-transparent to-[#FFA800]/10 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
     </div>
   );
 }
@@ -122,19 +120,20 @@ export default function BrowseByCategoryPage({
   };
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-4 sm:py-8 lg:py-12">
-      {/* Heading */}
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl lg:text-4xl">
-          Browse By Category
+    <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:py-16 lg:py-24">
+      {/* Modern Centered Header */}
+      <div className="mb-10 sm:mb-16 text-center">
+        <span className="mb-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[#FFA800]">
+          Diverse Legal Expertise
+        </span>
+        <h2 className="text-3xl font-black tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+          Browse By <span className="text-[#FFA800]">Category</span>
         </h2>
-        <p className="mt-1 text-xs text-neutral-500 sm:text-sm">
-          Over 10 Categories To Select From
-        </p>
+        <div className="mx-auto mt-4 h-1 w-20 rounded-full bg-gradient-to-r from-[#FFA800] to-orange-300 sm:mt-6" />
       </div>
 
-      {/* Grid: 2 cards per row on mobile, 3 md, 4 lg */}
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
+      {/* Responsive Grid */}
+      <div className="grid grid-cols-2 gap-4 sm:gap-8 md:grid-cols-3 lg:grid-cols-4">
         {categories.map((c, i) => (
           <CategoryCard
             key={c.title}
