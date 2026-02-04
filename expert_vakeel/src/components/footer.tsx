@@ -100,7 +100,7 @@ export default function Footer() {
         <div className={`${WRAP} py-6 sm:py-8`}>
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-[11px] sm:text-xs font-medium text-gray-500 tracking-wide">
-              © {new Date().getFullYear()} <span className="text-white">Expert Vakil</span>. All Rights Reserved.
+              © {new Date().getFullYear()} <span className="text-white">Expert vakeel</span>. All Rights Reserved.
             </p>
             <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-gray-600">
               Powered By <span className="text-[#FFA800]">Legal Network</span>

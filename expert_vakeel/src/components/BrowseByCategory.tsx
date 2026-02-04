@@ -88,10 +88,10 @@ function CategoryCard({
 
         {/* Action Button - Subtle and Premium */}
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-[11px] sm:text-xs font-semibold text-[#FFA800] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
+          <span className="text-[11px] sm:text-xs font-semibold text-gray-600 sm:text-[#FFA800] opacity-100 sm:opacity-0 -translate-x-2 sm:-translate-x-2 transition-all duration-300 sm:group-hover:opacity-100 sm:group-hover:translate-x-0 bg-[#FFA800] sm:bg-transparent text-white sm:text-[#FFA800] px-3 py-1.5 rounded-full sm:rounded-none sm:px-0 sm:py-0">
             View Experts
           </span>
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-all duration-300 group-hover:bg-[#FFA800] group-hover:text-white group-hover:rotate-[-45deg]">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-all duration-300 sm:group-hover:bg-[#FFA800] sm:group-hover:text-white sm:group-hover:rotate-[-45deg] hover:bg-amber-700 hover:text-white">
             <svg
               className="h-4 w-4 sm:h-5 sm:w-5"
               fill="none"

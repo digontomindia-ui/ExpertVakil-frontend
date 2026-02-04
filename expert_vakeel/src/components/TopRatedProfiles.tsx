@@ -119,7 +119,7 @@ export default function TopRatedProfiles() {
   );
 
   // --- computed values ---
-  const slidesToShow = isDesktop ? Math.min(4, filteredProfiles.length) : Math.min(2, filteredProfiles.length);
+  const slidesToShow = isDesktop ? Math.min(4, filteredProfiles.length) : Math.min(1, filteredProfiles.length);
   const infinite = filteredProfiles.length > slidesToShow;
 
   const settings = {
@@ -137,11 +137,11 @@ export default function TopRatedProfiles() {
       {
         breakpoint: 640,
         settings: {
-          slidesToShow: 1.2,
+          slidesToShow: 1,
           slidesToScroll: 1,
           arrows: false,
-          centerMode: true,
-          centerPadding: '20px',
+          centerMode: false,
+          centerPadding: '0px',
         }
       }
     ] as any[]

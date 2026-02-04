@@ -29,7 +29,7 @@ export default function LogIn() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <main className="w-full max-w-[400px] px-6 text-center">
-        <img src="/assets/Group1.png" alt="Expert Vakeel" className="mx-auto mb-6 h-24 w-auto select-none" draggable={false} />
+        <img src="/assets/logo_horizontal.png" alt="Expert Vakeel" className="mx-auto mb-6 h-20 w-auto select-none" draggable={false} />
         
         <h1 className="mb-3 text-[40px] leading-none font-extrabold tracking-tight text-[#6F6F6F]">Log In</h1>
         

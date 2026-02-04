@@ -17,7 +17,8 @@ import {
   FileText,
   HelpCircle,
   Star,
-  Award
+  Award,
+  Search as SearchIcon
 } from "lucide-react";
 
 // Types
@@ -71,22 +72,18 @@ interface ProcessedChallanData {
   totalPending: number;
 }
 
-// City options for dropdown
+// City options for dropdown - matches Home page cities
 const CITY_OPTIONS = [
-  "Delhi",
-  "Noida",
-  "Gurugram",
-  "Mumbai",
-  "Bangalore",
-  "Chennai",
-  "Kolkata",
-  "Hyderabad",
-  "Pune",
-  "Ahmedabad",
-  "Jaipur",
-  "Lucknow",
   "Chandigarh",
-  "Other"
+  "Mohali",
+  "Panchkula",
+  "Delhi",
+  "Mumbai",
+  "Bengaluru",
+  "Kolkata",
+  "Chennai",
+  "Hyderabad",
+  "Pune"
 ];
 
 // FAQ data per service type
@@ -158,6 +155,7 @@ export default function ServiceDetail() {
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cities, setCities] = useState<string[]>(CITY_OPTIONS);
 
   // Advocates section
   const [advocates, setAdvocates] = useState<Advocate[]>([]);
@@ -169,10 +167,13 @@ export default function ServiceDetail() {
   const [formName, setFormName] = useState("");
   const [formMobile, setFormMobile] = useState("");
   const [formCity, setFormCity] = useState("");
+  const [citySearch, setCitySearch] = useState("");
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
   const [formDescription, setFormDescription] = useState("");
   const [formSubmitting, setFormSubmitting] = useState(false);
   const [formStatus, setFormStatus] = useState<"" | "success" | "error">("");
   const [formMessage, setFormMessage] = useState("");
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
 
   // OTP State
   const [showOtpInput, setShowOtpInput] = useState(false);
@@ -232,6 +233,40 @@ export default function ServiceDetail() {
     loadService();
   }, [id]);
 
+  // Fetch cities from API (similar to home page)
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await publicUserAPI.getAll({
+          limit: "1000",
+        });
+
+        if (response.data && Array.isArray(response.data.data)) {
+          // Extract unique cities from users
+          const citiesSet = new Set<string>();
+          response.data.data.forEach((user: any) => {
+            if (user.city) {
+              const cleanedCity = user.city.trim();
+              if (cleanedCity) {
+                citiesSet.add(cleanedCity);
+              }
+            }
+          });
+
+          const finalCities = Array.from(citiesSet).sort();
+          if (finalCities.length > 0) {
+            setCities(finalCities);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching cities:", err);
+        // Keep default cities on error
+      }
+    };
+
+    fetchCities();
+  }, []);
+
   // Load advocates based on service category
   const loadAdvocates = async (serviceName: string) => {
     try {
@@ -264,6 +299,27 @@ export default function ServiceDetail() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [showAdvocates]);
+
+  // Handle click outside city dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+        setCityDropdownOpen(false);
+      }
+    };
+
+    if (cityDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [cityDropdownOpen]);
+
+  // Filter cities based on search
+  const filteredCities = cities.filter((city) => {
+    if (!citySearch.trim()) return true;
+    const regex = new RegExp(citySearch.trim(), "i");
+    return regex.test(city);
+  });
 
   // Send OTP
   const handleSendOtp = async () => {
@@ -517,8 +573,8 @@ export default function ServiceDetail() {
       <section className="w-full max-w-screen-xl mx-auto px-4 py-8 md:py-12">
         <div className="flex flex-col lg:flex-row gap-8">
 
-          {/* Left Side - Traffic Challan Check OR Service Info (order-2 for mobile) */}
-          <div className="w-full lg:w-3/5 order-2 lg:order-1 space-y-6">
+          {/* Left Side - Traffic Challan Check OR Service Info (order-1 for mobile to show at top) */}
+          <div className="w-full lg:w-3/5 order-1 lg:order-1 space-y-6">
 
             {/* Traffic Challan Check (Conditional) */}
             {isTrafficChallanService && (
@@ -610,8 +666,8 @@ export default function ServiceDetail() {
             </div>
           </div>
 
-          {/* Form Card - Strategic Priority (order-1 for mobile) */}
-          <div className="w-full lg:w-2/5 order-1 lg:order-2">
+          {/* Form Card - Strategic Priority (order-2 for mobile to show after challan) */}
+          <div className="w-full lg:w-2/5 order-2 lg:order-2">
             <div id="lead-form" className={`bg-white rounded-xl shadow-lg border-2 ${formStatus === "success" ? "border-green-500" : "border-[#1a365d]/10"} overflow-hidden sticky top-24`}>
               <div className="bg-[#1a365d] p-4 text-white text-center">
                 <h3 className="font-bold">Book Your Professional Assistance</h3>
@@ -662,22 +718,71 @@ export default function ServiceDetail() {
                   </div>
                 </div>
 
-                {/* City Dropdown */}
-                <div className="relative space-y-1">
+                {/* City Dropdown - Searchable */}
+                <div ref={cityDropdownRef} className="relative space-y-1">
                   <label className="block text-[11px] font-bold text-gray-400 uppercase ml-1">City *</label>
                   <div className="relative">
-                    <select
-                      value={formCity}
-                      onChange={(e) => setFormCity(e.target.value)}
+                    <button
+                      type="button"
+                      onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
                       disabled={showOtpInput || otpVerified}
-                      className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 appearance-none bg-white cursor-pointer disabled:bg-gray-50 transition-all"
+                      className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 bg-white disabled:bg-gray-50 transition-all text-left flex items-center justify-between"
                     >
-                      <option value="">Select your city</option>
-                      {CITY_OPTIONS.map((city, idx) => (
-                        <option key={idx} value={city}>{city}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <span className={formCity ? "text-gray-900 font-medium" : "text-gray-400"}>
+                        {formCity || "Search and select city"}
+                      </span>
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${cityDropdownOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {cityDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                        {/* Search Input */}
+                        <div className="p-3 border-b border-gray-100">
+                          <div className="relative flex items-center">
+                            <SearchIcon className="w-4 h-4 text-gray-400 absolute left-3" />
+                            <input
+                              type="text"
+                              value={citySearch}
+                              onChange={(e) => setCitySearch(e.target.value)}
+                              placeholder="Search City"
+                              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+
+                        {/* City List */}
+                        <div className="max-h-64 overflow-y-auto">
+                          {filteredCities.length > 0 ? (
+                            filteredCities.map((city) => (
+                              <button
+                                key={city}
+                                type="button"
+                                onClick={() => {
+                                  setFormCity(city);
+                                  setCityDropdownOpen(false);
+                                  setCitySearch("");
+                                }}
+                                className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
+                                  formCity === city
+                                    ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600"
+                                    : "text-gray-700 hover:bg-gray-50"
+                                }`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span>{city}</span>
+                                  {formCity === city && <Check className="w-4 h-4" />}
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-6 text-center text-sm text-gray-500">
+                              No cities found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -56,7 +56,7 @@ export default function WhyExpertVakeel() {
             </span>
           </div>
           <h2 className="text-3xl font-black tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
-            Why <span className="text-[#FFA800]">Expert Vakil</span>
+            Why <span className="text-[#FFA800]">Expert Vakeel</span>
           </h2>
           <div className="mt-6 h-1 w-24 rounded-full bg-gradient-to-r from-[#FFA800] to-orange-300" />
           <p className="mt-8 max-w-2xl text-sm font-medium leading-relaxed text-gray-500 sm:text-lg">
