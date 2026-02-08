@@ -14,19 +14,21 @@ export default function MyBookings() {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Redirect to login if not authenticated
-        if (!userLoading && !user) {
-            navigate("/login");
-            return;
-        }
-
         const loadBookings = async () => {
-            if (!user) return;
+            const guestClientId = localStorage.getItem("clientId");
+            if (!user && !guestClientId) {
+                setLoading(false);
+                return;
+            }
 
             try {
                 setLoading(true);
                 setError(null);
-                const clientId = user.id || user._id;
+                const clientId = user ? (user.id || user._id) : guestClientId;
+                if (!clientId) {
+                    setLoading(false);
+                    return;
+                }
                 const response = await serviceBookedAPI.getByClientId(clientId);
 
                 if (response.data.success && response.data.data) {
@@ -42,10 +44,10 @@ export default function MyBookings() {
             }
         };
 
-        if (user) {
+        if (!userLoading) {
             loadBookings();
         }
-    }, [user, userLoading, navigate]);
+    }, [user, userLoading]);
 
     const formatDate = (timestamp: any) => {
         if (!timestamp) return "N/A";
@@ -129,7 +131,23 @@ export default function MyBookings() {
 
             {/* Content Section */}
             <div className="relative mx-auto -mt-20 max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-                {bookings.length === 0 ? (
+                {!user && bookings.length === 0 ? (
+                    <div className="rounded-3xl bg-white p-12 text-center shadow-xl ring-1 ring-gray-100 md:p-20">
+                        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
+                            <Package className="h-10 w-10 text-blue-400" />
+                        </div>
+                        <h3 className="mb-2 text-xl font-bold text-gray-900">Login Required</h3>
+                        <p className="mb-8 text-gray-500">
+                            Please login to view and track your service bookings. If you've booked as a guest, please use the same device.
+                        </p>
+                        <button
+                            onClick={() => navigate("/login")}
+                            className="rounded-full bg-black px-8 py-3 text-sm font-semibold text-white transition-transform hover:scale-105 hover:shadow-lg"
+                        >
+                            Login / Register
+                        </button>
+                    </div>
+                ) : bookings.length === 0 ? (
                     <div className="rounded-3xl bg-white p-12 text-center shadow-xl ring-1 ring-gray-100 md:p-20">
                         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
                             <Package className="h-10 w-10 text-blue-400" />

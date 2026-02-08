@@ -138,17 +138,22 @@ export default function ProfileView() {
   const [clientName, setClientName] = useState<string>("");
   const [showRatingModal, setShowRatingModal] = useState(false);
 
-  // Check if user is authenticated
+  // No longer forces login to view profiles to support guest browsing
   useEffect(() => {
+    // We can still check for token but don't redirect
     const token = localStorage.getItem("token");
     const clientData = localStorage.getItem("client");
 
-    // If no token and no client data, redirect to login
-    if (!token && (!clientData || clientData === "undefined")) {
-      navigate("/login");
-      return;
+    if (token && clientData && clientData !== "undefined") {
+      try {
+        const c = JSON.parse(clientData);
+        setClientId(c.id || c._id);
+        setClientName(c.fullName || "Anonymous User");
+      } catch (err) {
+        console.error("Error parsing client data:", err);
+      }
     }
-  }, [navigate]);
+  }, []);
 
   // Refresh page at least twice when component mounts
   useEffect(() => {
@@ -181,25 +186,6 @@ export default function ProfileView() {
   const handleSendMessage = () => {
     if (userId && profileData) startConversation(userId, profileData.name);
   };
-
-  // client (optional auth)
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const clientData = localStorage.getItem("client");
-    if (token && clientData && clientData !== "undefined") {
-      try {
-        const c = JSON.parse(clientData);
-        setClientId(c.id || c._id);
-        setClientName(c.fullName || "Anonymous User");
-      } catch {
-        try {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          setClientId(payload.id);
-          setClientName("Anonymous User");
-        } catch {}
-      }
-    }
-  }, []);
 
   // fetch data
   useEffect(() => {
@@ -237,10 +223,8 @@ export default function ProfileView() {
           ],
           bio:
             user.bio ||
-            `Professional ${user.userType === "individual" ? "lawyer" : "law firm"} with ${
-              user.yearsOfExperience || 0
-            } years of experience in ${user.specializations?.join(", ") || "general practice"}. Specializing in ${
-              user.courts?.join(", ") || "various courts"
+            `Professional ${user.userType === "individual" ? "lawyer" : "law firm"} with ${user.yearsOfExperience || 0
+            } years of experience in ${user.specializations?.join(", ") || "general practice"}. Specializing in ${user.courts?.join(", ") || "various courts"
             }.`,
           userType: user.userType,
           specializations: user.specializations || [],
@@ -430,13 +414,13 @@ export default function ProfileView() {
                         id = c.id || c._id;
                         name = c.fullName;
                         setClientName(name || "Anonymous User");
-                      } catch {}
+                      } catch { }
                     }
                     if (!id && token) {
                       try {
                         const payload = JSON.parse(atob(token.split(".")[1]));
                         id = payload.id;
-                      } catch {}
+                      } catch { }
                     }
                     if (id) {
                       setClientId(id);
@@ -468,33 +452,29 @@ export default function ProfileView() {
               <div className="flex w-max gap-1">
                 <button
                   onClick={() => setActiveTab("bio")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                    activeTab === "bio" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "bio" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Bio
                 </button>
                 <button
                   onClick={() => setActiveTab("reviews")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                    activeTab === "reviews" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "reviews" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Reviews ({Array.isArray(reviews) ? reviews.length : 0})
                 </button>
                 <button
                   onClick={() => setActiveTab("share")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                    activeTab === "share" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "share" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Share Profile
                 </button>
                 <button
                   onClick={() => setActiveTab("report")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
-                    activeTab === "report" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "report" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Report Profile
                 </button>
@@ -585,18 +565,16 @@ export default function ProfileView() {
                             {[1, 2, 3, 4, 5].map((s) => (
                               <Star
                                 key={s}
-                                className={`h-4 w-4 ${
-                                  s <= Math.round(p.ratingStats!.averageRating)
-                                    ? "fill-yellow-400 text-yellow-400"
-                                    : "text-gray-300"
-                                }`}
+                                className={`h-4 w-4 ${s <= Math.round(p.ratingStats!.averageRating)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-gray-300"
+                                  }`}
                               />
                             ))}
                             <span className="ml-1">
                               {p.ratingStats.ratingCount > 0
-                                ? `${p.ratingStats.averageRating.toFixed(1)} (${p.ratingStats.ratingCount} rating${
-                                    p.ratingStats.ratingCount !== 1 ? "s" : ""
-                                  })`
+                                ? `${p.ratingStats.averageRating.toFixed(1)} (${p.ratingStats.ratingCount} rating${p.ratingStats.ratingCount !== 1 ? "s" : ""
+                                })`
                                 : "No ratings yet"}
                             </span>
                           </div>
@@ -709,9 +687,8 @@ export default function ProfileView() {
                                   {[1, 2, 3, 4, 5].map((s) => (
                                     <Star
                                       key={s}
-                                      className={`h-3 w-3 ${
-                                        s <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                      }`}
+                                      className={`h-3 w-3 ${s <= (review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                        }`}
                                     />
                                   ))}
                                   {review.rating && <span className="ml-1 text-xs text-gray-500">{review.rating}/5</span>}
@@ -785,8 +762,7 @@ export default function ProfileView() {
                     const url = encodeURIComponent(window.location.href);
                     const title = encodeURIComponent(`${p.name} - Expert Legal Professional`);
                     const summary = encodeURIComponent(
-                      `Connect with ${p.name}, an experienced legal professional specializing in ${
-                        p.specializations?.join(", ") || "various legal matters"
+                      `Connect with ${p.name}, an experienced legal professional specializing in ${p.specializations?.join(", ") || "various legal matters"
                       }.`
                     );
                     window.open(
@@ -916,7 +892,7 @@ export default function ProfileView() {
           </div>
         </section>
 
-        
+
       </div>
 
       {/* Rating Modal */}

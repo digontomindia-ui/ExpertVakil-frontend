@@ -73,7 +73,15 @@ export default function TopRatedProfiles() {
           court: user.courts?.join(", ") || "Not specified",
           specialty: user.specializations?.join(" & ") || "General",
           verified: user.isVerify,
-          badges: [user.userType === "individual" ? "Individual Profile" : "Law Firm"],
+          badges: [(user.userType === "individual") ? "Individual Profile" : "Law Firm"],
+          // Additional fields
+          bio: user.bio || "",
+          city: user.city || "",
+          languages: user.languages || [],
+          services: user.services || [],
+          specializations: user.specializations || [],
+          courts: user.courts || [],
+          isOnline: user.isOnline || false,
         }));
         setProfiles(mapped);
         await fetchRatingStats(mapped.map((p) => p.id));

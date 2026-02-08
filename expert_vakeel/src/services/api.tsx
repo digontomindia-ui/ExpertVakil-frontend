@@ -138,6 +138,35 @@ export interface Blog {
   published: boolean;
 }
 
+// News Types
+export interface NewsPost {
+  id: string;
+  title: string;
+  imageUrl: string;
+  description: string;
+  brief: string;
+  source: string;
+  liveLink: string;
+  category: string;
+  createdAt: any;
+  updatedAt: any;
+  views: number;
+  isTrending: boolean;
+  published: boolean;
+}
+
+export interface NewsInput {
+  title: string;
+  imageUrl: string;
+  description: string;
+  brief: string;
+  source: string;
+  liveLink: string;
+  category: string;
+  isTrending?: boolean;
+  published?: boolean;
+}
+
 export interface BlogInput {
   title: string;
   category: string;
@@ -340,7 +369,7 @@ api.interceptors.response.use(
         console.warn('Localhost server not responding, switching to production backend...');
 
         // Update base URL to production
-        api.defaults.baseURL = "https://legal-backend-seven.vercel.app";
+        api.defaults.baseURL = "https://api.legalnetwork.in";
         originalRequest._retry = true;
 
         // Retry the request with production URL
@@ -757,6 +786,7 @@ export interface Service {
   id: string;
   name: string;
   description: string;
+  image?: string;
   categories: string[];
   number: string;
   createdAt: any; // Firestore Timestamp
@@ -794,6 +824,14 @@ export const serviceAPI = {
     api.get(`/api/services/${id}`),
 };
 
+// ==================== CHALLAN API ====================
+
+export const challanAPI = {
+  // Main search endpoint
+  search: (rcNumber: string, email: string, phone: string) =>
+    api.post("/api/challan/search", { rcNumber, email, phone }),
+};
+
 // ==================== SERVICE BOOKED API ====================
 
 export const serviceBookedAPI = {
@@ -804,6 +842,59 @@ export const serviceBookedAPI = {
   // Get service bookings by client ID
   getByClientId: (clientId: string): Promise<{ data: { success: boolean; data: ServiceBooked[] } }> =>
     api.get(`/api/services-booked/client/${clientId}`),
+};
+
+// ==================== CATEGORY TYPES ====================
+
+export interface Category {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  order: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ==================== CATEGORY API ====================
+
+export const categoriesAPI = {
+  // Get all active categories
+  getAll: (params?: { isActive?: boolean }): Promise<{ data: { success: boolean; data: Category[] } }> =>
+    api.get("/api/categories", { params }),
+
+  // Get category by ID
+  getById: (id: string): Promise<{ data: { success: boolean; data: Category } }> =>
+    api.get(`/api/categories/${id}`),
+};
+
+// ==================== NEWS API ====================
+
+export const newsAPI = {
+  // Create a new news post
+  create: (data: NewsInput): Promise<{ data: { success: boolean; data: NewsPost } }> =>
+    api.post("/api/news", data),
+
+  // Get all news posts
+  getAll: (params?: any): Promise<{ data: { success: boolean; data: NewsPost[] } }> =>
+    api.get("/api/news", { params }),
+
+  // Get news post by ID
+  getById: (id: string): Promise<{ data: { success: boolean; data: NewsPost } }> =>
+    api.get(`/api/news/${id}`),
+
+  // Update news post
+  update: (id: string, data: Partial<NewsInput>): Promise<{ data: { success: boolean; data: NewsPost } }> =>
+    api.put(`/api/news/${id}`, data),
+
+  // Delete news post
+  delete: (id: string): Promise<{ data: { success: boolean } }> =>
+    api.delete(`/api/news/${id}`),
+
+  // Increment views
+  incrementViews: (id: string): Promise<{ data: { success: boolean; data: NewsPost } }> =>
+    api.post(`/api/news/${id}/views/increment`),
 };
 
 export default api;

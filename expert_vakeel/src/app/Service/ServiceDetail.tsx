@@ -2,7 +2,7 @@
 // Aligned with ExpertVakeel Lead Data Requirements & Service Page Documentation
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import api, { serviceAPI, serviceBookedAPI, publicUserAPI, type User as Advocate } from "../../services/api";
+import api, { serviceAPI, serviceBookedAPI, publicUserAPI, challanAPI, type User as Advocate } from "../../services/api";
 import {
   ArrowLeft,
   Loader,
@@ -370,9 +370,9 @@ export default function ServiceDetail() {
 
   // Verify OTP
   const handleVerifyOtp = async () => {
-    if (!otp || otp.length < 4) {
+    if (!otp || otp.length < 6) {
       setFormStatus("error");
-      setFormMessage("Please enter a valid OTP");
+      setFormMessage("Please enter a valid 6-digit OTP");
       return;
     }
 
@@ -445,29 +445,96 @@ export default function ServiceDetail() {
     }
   };
 
-  // Challan Search
+  // Challan Search - MODIFIED TO HANDLE VERIFICATION
   const handleSearchChallan = async () => {
     if (!vehicleNumber.trim()) {
       setChallanError("Please enter vehicle number");
       return;
     }
 
-    const phone = formMobile || localStorage.getItem("phone") || "";
-    if (!phone) {
-      setChallanError("Please fill the form with your mobile number first");
-      return;
+    // If not verified, handle OTP flow
+    if (!otpVerified) {
+      if (!formMobile || !/^[0-9]{10}$/.test(formMobile)) {
+        setChallanError("Please enter a valid 10-digit mobile number");
+        return;
+      }
+
+      if (!showOtpInput) {
+        // Send OTP
+        setSearchingChallan(true);
+        setChallanError(null);
+        try {
+          const response = await api.post("/api/verify/generate-otp", {
+            name: formName || "User",
+            city: formCity || "Online",
+            phoneNumber: formMobile,
+          });
+
+          if (response.data.success) {
+            setVerificationId(response.data.verificationId);
+            setShowOtpInput(true);
+            setChallanError(null);
+            if (response.data.testOtp) console.log("🔢 Test OTP:", response.data.testOtp);
+          } else {
+            throw new Error(response.data.message || "Failed to send OTP");
+          }
+        } catch (err: any) {
+          setChallanError(err.response?.data?.message || "Failed to send OTP");
+        } finally {
+          setSearchingChallan(false);
+        }
+        return;
+      } else {
+        // Verify OTP
+        if (!otp || otp.length < 6) {
+          setChallanError("Please enter 6-digit OTP");
+          return;
+        }
+
+        setSearchingChallan(true);
+        try {
+          const response = await api.post("/api/verify/verify-otp", {
+            verificationId,
+            otp,
+            phoneNumber: formMobile,
+          });
+
+          if (response.data.success) {
+            setOtpVerified(true);
+            setShowOtpInput(false);
+            localStorage.setItem("phone", formMobile);
+            if (response.data.clientId) localStorage.setItem("clientId", response.data.clientId);
+
+            // Proceed to search automatically after verification
+            await executeChallanSearch(formMobile);
+          } else {
+            throw new Error(response.data.message || "Invalid OTP");
+          }
+        } catch (err: any) {
+          setChallanError(err.response?.data?.message || "Invalid OTP");
+        } finally {
+          setSearchingChallan(false);
+        }
+        return;
+      }
     }
 
+    // Already verified, just search
+    await executeChallanSearch(formMobile || localStorage.getItem("phone") || "");
+  };
+
+  // Helper to execute search
+  const executeChallanSearch = async (phoneNumber: string) => {
     setSearchingChallan(true);
     setChallanError(null);
     setChallanData(null);
 
     try {
-      const response = await api.post("/api/challan/search", {
-        rcNumber: vehicleNumber.toUpperCase(),
-        email: `${phone}@expertvakeel.com`,
-        phone: phone,
-      });
+      const response = await challanAPI.search(
+        vehicleNumber.toUpperCase(),
+        `${phoneNumber}@expertvakeel.com`,
+        phoneNumber
+      );
 
       const apiResponse = response.data;
       const challanPayload = apiResponse.data;
@@ -580,22 +647,53 @@ export default function ServiceDetail() {
             {isTrafficChallanService && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">Check Your Challan Status</h2>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <input
-                    type="text"
-                    value={vehicleNumber}
-                    onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
-                    placeholder="Vehicle Number / DL Number"
-                    className="flex-1 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold text-gray-900 uppercase placeholder:font-normal placeholder:normal-case text-sm"
-                  />
-                  <button
-                    onClick={handleSearchChallan}
-                    disabled={searchingChallan}
-                    className="bg-[#1a365d] hover:bg-[#2d4a7c] text-white font-semibold px-6 py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm whitespace-nowrap"
-                  >
-                    {searchingChallan ? <Loader className="w-4 h-4 animate-spin" /> : null}
-                    Check Challan
-                  </button>
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
+                      value={vehicleNumber}
+                      onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+                      placeholder="Vehicle Number / DL Number"
+                      className="flex-1 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold text-gray-900 uppercase placeholder:font-normal placeholder:normal-case text-sm"
+                    />
+
+                    {!otpVerified && !showOtpInput && (
+                      <input
+                        type="tel"
+                        value={formMobile}
+                        onChange={(e) => setFormMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                        placeholder="Mobile Number"
+                        maxLength={10}
+                        className="flex-1 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold text-gray-900 text-sm"
+                      />
+                    )}
+
+                    {showOtpInput && (
+                      <input
+                        type="text"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        placeholder="Enter 6-digit OTP"
+                        maxLength={6}
+                        className="flex-1 border border-blue-200 bg-blue-50 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-bold text-blue-900 text-center tracking-widest text-sm"
+                      />
+                    )}
+
+                    <button
+                      onClick={handleSearchChallan}
+                      disabled={searchingChallan}
+                      className="bg-[#1a365d] hover:bg-[#2d4a7c] text-white font-semibold px-6 py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm whitespace-nowrap"
+                    >
+                      {searchingChallan ? <Loader className="w-4 h-4 animate-spin" /> : null}
+                      {otpVerified ? "Check Status" : (showOtpInput ? "Verify & Check" : "Get OTP")}
+                    </button>
+                  </div>
+
+                  {showOtpInput && (
+                    <p className="text-[10px] text-blue-600 font-medium ml-1">
+                      OTP sent to {formMobile}. <button onClick={() => setShowOtpInput(false)} className="underline">Change number</button>
+                    </p>
+                  )}
                 </div>
 
                 {challanError && (
@@ -763,11 +861,10 @@ export default function ServiceDetail() {
                                   setCityDropdownOpen(false);
                                   setCitySearch("");
                                 }}
-                                className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${
-                                  formCity === city
-                                    ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600"
-                                    : "text-gray-700 hover:bg-gray-50"
-                                }`}
+                                className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${formCity === city
+                                  ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600"
+                                  : "text-gray-700 hover:bg-gray-50"
+                                  }`}
                               >
                                 <div className="flex items-center justify-between">
                                   <span>{city}</span>

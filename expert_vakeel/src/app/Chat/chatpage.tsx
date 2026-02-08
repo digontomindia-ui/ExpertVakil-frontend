@@ -10,6 +10,7 @@ import {
   Download,
   Menu,
   X,
+  MessageCircle,
 } from "lucide-react";
 import { useChat } from "../../context/ChatContext";
 import { useUser } from "../../context/UserContext";
@@ -210,37 +211,22 @@ export default function ChatPage() {
   const listRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Verify authentication with backend token/ID validation
+  // No longer forces login to view chat page to support guest browsing
   useEffect(() => {
     const verifyAuthentication = async () => {
       try {
         const authResult = await clientAPI.verifyAuth();
-        
         if (authResult.authenticated && authResult.user) {
-          const userId = authResult.user.id || authResult.user._id;
-          
-          // Verify user has valid ID
-          if (userId) {
-            setIsAuthenticated(true);
-            setIsAuthenticating(false);
-            return;
-          }
+          setIsAuthenticated(true);
         }
-        
-        // If authentication fails, redirect to login
-        setIsAuthenticated(false);
-        setIsAuthenticating(false);
-        navigate("/login", { replace: true });
       } catch (error) {
         console.error("Authentication verification failed:", error);
-        setIsAuthenticated(false);
+      } finally {
         setIsAuthenticating(false);
-        navigate("/login", { replace: true });
       }
     };
-
     verifyAuthentication();
-  }, [navigate]);
+  }, []);
 
   // Get conversation data from navigation state
   useEffect(() => {
@@ -342,13 +328,24 @@ export default function ChatPage() {
     );
   }
 
-  // Don't render if not authenticated (redirect will happen)
+  // Show guest state if not authenticated
   if (!isAuthenticated || !user) {
     return (
-      <main className="min-h-[100dvh] bg-gradient-to-b from-white to-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
-          <p className="text-sm text-gray-600">Redirecting to login...</p>
+      <main className="min-h-[100dvh] bg-gradient-to-b from-white to-slate-50 flex items-center justify-center p-4">
+        <div className="text-center max-w-sm">
+          <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-600 shadow-inner">
+            <MessageCircle className="h-10 w-10" />
+          </div>
+          <h2 className="mb-2 text-2xl font-bold text-gray-900 tracking-tight">Login Required</h2>
+          <p className="mb-8 text-sm text-gray-500 leading-relaxed">
+            Please login or register to access your chat history and connect with legal experts directly.
+          </p>
+          <button
+            onClick={() => navigate("/login")}
+            className="w-full rounded-full bg-black py-4 text-sm font-semibold text-white shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Login / Register
+          </button>
         </div>
       </main>
     );
@@ -681,14 +678,13 @@ export default function ChatPage() {
                       selectConversation(conversation);
                       setShowConversations(false); // close drawer on mobile
                     }}
-                    className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition hover:bg-gray-50 ${
-                      currentConversation &&
+                    className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 transition hover:bg-gray-50 ${currentConversation &&
                       (currentConversation.otherUserId === otherUserId ||
                         currentConversation.senderId === otherUserId ||
                         currentConversation.receiverId === otherUserId)
-                        ? "bg-gray-50"
-                        : ""
-                    }`}
+                      ? "bg-gray-50"
+                      : ""
+                      }`}
                   >
                     <div className="relative flex-shrink-0">
                       <Avatar src={getDisplayProfilePic(otherUserId)} name={displayName} />

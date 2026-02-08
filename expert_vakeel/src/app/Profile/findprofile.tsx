@@ -118,8 +118,12 @@ type FindProfile = {
   bio?: string;
   completeAddress?: string;
   languages?: string[];
-  userType?: 'individual' | 'firm';
+  userType?: 'individual' | 'law_firm' | 'firm';
   visibility?: string;
+  services?: string[];
+  isOnline?: boolean;
+  email?: string;
+  phoneNumber?: string;
 };
 
 /* ------------------------------ Page ------------------------------ */
@@ -563,7 +567,15 @@ export default function FindProfilePage() {
     court: fp.courts?.join(", ") || "Not specified",
     specialty: fp.specializations?.join(" & ") || "General",
     verified: fp.isVerify,
-    badges: ["Individual Profile"],
+    badges: [(fp.userType === 'law_firm' || fp.userType === 'firm') ? 'Law Firm' : 'Individual Profile'],
+    // Additional fields
+    bio: fp.bio || "",
+    city: fp.city || "",
+    languages: fp.languages || [],
+    services: fp.services || [],
+    specializations: fp.specializations || [],
+    courts: fp.courts || [],
+    isOnline: fp.isOnline || false,
   });
 
   /* ------------------------------ Render ------------------------------ */
@@ -685,17 +697,17 @@ export default function FindProfilePage() {
               </div>
 
               {/* Actions */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="relative z-10 flex flex-wrap items-center gap-3 pt-2">
                 <button
                   type="submit"
-                  className="rounded-full bg-[#FFA800] px-6 py-3.5 text-sm font-semibold text-black shadow transition hover:brightness-95"
+                  className="cursor-pointer rounded-full bg-[#FFA800] px-6 py-3.5 text-sm font-semibold text-black shadow transition hover:brightness-95 active:scale-95"
                 >
                   Apply Filters &amp; Search
                 </button>
                 <button
                   type="button"
                   onClick={resetFilters}
-                  className="rounded-full bg-[#EDEEEF] px-6 py-3.5 text-sm font-medium text-gray-800 shadow transition hover:bg-[#E6E7E8]"
+                  className="cursor-pointer rounded-full bg-[#EDEEEF] px-6 py-3.5 text-sm font-medium text-gray-800 shadow transition hover:bg-[#E6E7E8] active:scale-95"
                 >
                   Reset Filters
                 </button>
@@ -747,7 +759,6 @@ export default function FindProfilePage() {
                 sm:grid-cols-2 sm:gap-5
                 md:grid-cols-3
                 lg:grid-cols-4
-                xl:grid-cols-5
               "
             >
               {profiles.slice(0, visible).map((p) => (

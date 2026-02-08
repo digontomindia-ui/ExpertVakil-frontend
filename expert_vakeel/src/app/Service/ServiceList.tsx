@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { serviceAPI, type Service } from "../../services/api";
 import { Loader, ArrowRight } from "lucide-react";
@@ -9,6 +9,7 @@ export default function ServiceList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadServices = async () => {
@@ -33,25 +34,6 @@ export default function ServiceList() {
     loadServices();
   }, []);
 
-  useEffect(() => {
-    const refreshKey = "service_list_refresh";
-    let refreshCount = parseInt(sessionStorage.getItem(refreshKey) || "0");
-    const maxRefreshes = 2;
-
-    if (refreshCount < maxRefreshes) {
-      refreshCount++;
-      sessionStorage.setItem(refreshKey, refreshCount.toString());
-
-      const timer = setTimeout(() => {
-        window.location.reload();
-      }, 500);
-
-      return () => clearTimeout(timer);
-    } else {
-      sessionStorage.removeItem(refreshKey);
-    }
-  }, []);
-
   const filteredServices = useMemo(() => {
     if (!searchQuery.trim()) return services;
     const query = searchQuery.toLowerCase();
@@ -66,6 +48,29 @@ export default function ServiceList() {
   const handleServiceClick = (serviceId: string) => {
     navigate(`/service/${serviceId}`);
   };
+
+  // Helper function to get image URL - use service.image if available, otherwise fallback to default
+  const getServiceImage = useCallback((service: Service, index: number): string => {
+    // If image already failed, use fallback directly
+    if (service.image && failedImages.has(service.id)) {
+      return `/assets/services_logo/p${(index % 10) + 1}.png`;
+    }
+    if (service.image && service.image.trim()) {
+      return service.image;
+    }
+    // Fallback to default images based on index (mod 10 to cycle through available images)
+    return `/assets/services_logo/p${(index % 10) + 1}.png`;
+  }, [failedImages]);
+
+  // Handle image error - mark as failed and don't retry
+  const handleImageError = useCallback((serviceId: string, e: React.SyntheticEvent<HTMLImageElement>) => {
+    // Prevent infinite loop by only handling error once per service
+    if (!failedImages.has(serviceId)) {
+      setFailedImages(prev => new Set([...prev, serviceId]));
+    }
+    // Hide the broken image
+    (e.target as HTMLImageElement).style.display = 'none';
+  }, [failedImages]);
 
   if (loading) {
     return (
@@ -141,8 +146,8 @@ export default function ServiceList() {
         ) : (
           <div className="grid grid-cols-4 gap-y-6 gap-x-2 sm:gap-8 md:grid-cols-3 lg:grid-cols-4">
             {filteredServices.map((service, index) => {
-              // Compute logo path dynamically
-              const logoPath = `/assets/services_logo/p${index + 1}.png`;
+              // Get image from service data or fallback to default
+              const logoPath = getServiceImage(service, index);
 
               return (
                 <div
@@ -176,6 +181,7 @@ export default function ServiceList() {
                       src={logoPath}
                       alt={service.name}
                       className="h-9 w-9 sm:h-10 sm:w-10 object-contain transition-transform duration-500 group-hover:scale-110"
+                      onError={(e) => handleImageError(service.id, e)}
                     />
 
                     {/* Subtle Brand Accent on Hover */}
@@ -208,3 +214,5 @@ export default function ServiceList() {
     </main>
   );
 }
+
+

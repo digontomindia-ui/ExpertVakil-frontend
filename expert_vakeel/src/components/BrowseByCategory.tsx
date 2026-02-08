@@ -1,23 +1,21 @@
 "use client";
 
-type Category = {
-  title: string;
-  subtitle: string;
-  image: string;
-};
+import { useState, useEffect } from "react";
+import { categoriesAPI, type Category } from "../services/api";
 
-const categories: Category[] = [
-  { title: "Civil Matters", subtitle: "Property, Contracts, Disputes", image: "/assets/image1.png" },
-  { title: "Criminal Matters", subtitle: "Bail, Defense, Investigation", image: "/assets/image2.png" },
-  { title: "Family Matters", subtitle: "Divorce, Custody, Heritage", image: "/assets/image3.png" },
-  { title: "Labour Matters", subtitle: "Employment, Wages, Disputes", image: "/assets/images4.png" },
-  { title: "Taxation Matters", subtitle: "GST, IT, Corporate Tax", image: "/assets/images5.png" },
-  { title: "Documentation", subtitle: "Agreements, Deeds, Registration", image: "/assets/image6.png" },
-  { title: "Trademark & IP", subtitle: "Copyright, Patents, Brands", image: "/assets/image7.png" },
-  { title: "High Court", subtitle: "Appeals, Writ Petitions", image: "/assets/image8.png" },
-  { title: "Supreme Court", subtitle: "Special Leave Petitions", image: "/assets/image9.png" },
-  { title: "Forums & Tribunal", subtitle: "NCLT, DRT, Consumer Court", image: "/assets/image11.png" },
-  { title: "Business Matters", subtitle: "Startup, Compliance, Mergers", image: "/assets/image12.png" },
+// Default categories as fallback if none exist in the database
+const defaultCategories: Omit<Category, 'id' | 'order' | 'createdAt' | 'updatedAt'>[] = [
+  { title: "Family Matters", subtitle: "Divorce, Custody, Heritage", image: "/assets/image1.png", isActive: true },
+  { title: "Criminal Matters", subtitle: "Bail, Defense, Investigation", image: "/assets/image2.png", isActive: true },
+  { title: "Labour Matters", subtitle: "Employment, Wages, Disputes", image: "/assets/image3.png", isActive: true },
+  { title: "Taxation Matters", subtitle: "GST, IT, Corporate Tax", image: "/assets/images4.png", isActive: true },
+  { title: "Business Matters", subtitle: "Startup, Compliance, Mergers", image: "/assets/images5.png", isActive: true },
+  { title: "Civil Matters", subtitle: "Property, Contracts, Disputes", image: "/assets/image6.png", isActive: true },
+  { title: "Trademark & IP", subtitle: "Copyright, Patents, Brands", image: "/assets/image7.png", isActive: true },
+  { title: "Documentation", subtitle: "Agreements, Deeds, Registration", image: "/assets/image8.png", isActive: true },
+  { title: "High Court", subtitle: "Appeals, Writ Petitions", image: "/assets/image9.png", isActive: true },
+  { title: "Supreme Court", subtitle: "Special Leave Petitions", image: "/assets/image10.png", isActive: true },
+  { title: "Forums & Tribunal", subtitle: "NCLT, DRT, Consumer Court", image: "/assets/image11.png", isActive: true },
 ];
 
 const titleColors = [
@@ -48,13 +46,19 @@ const bgGradients = [
   "from-fuchsia-500/10",
 ];
 
+type CategoryDisplay = {
+  title: string;
+  subtitle: string;
+  image: string;
+};
+
 function CategoryCard({
   title,
   subtitle,
   image,
   colorIndex,
   onExplore,
-}: Category & { colorIndex: number; onExplore: (category: string) => void }) {
+}: CategoryDisplay & { colorIndex: number; onExplore: (category: string) => void }) {
   const titleColor = titleColors[colorIndex % titleColors.length];
   const bgGradient = bgGradients[colorIndex % bgGradients.length];
 
@@ -70,6 +74,9 @@ function CategoryCard({
           alt={title}
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "/assets/placeholder.png";
+          }}
         />
         {/* Color Overlay Hint */}
         <div className={`absolute inset-0 bg-gradient-to-t ${bgGradient} to-transparent opacity-60`} />
@@ -88,7 +95,7 @@ function CategoryCard({
 
         {/* Action Button - Subtle and Premium */}
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-[11px] sm:text-xs font-semibold text-gray-600 sm:text-[#FFA800] opacity-100 sm:opacity-0 -translate-x-2 sm:-translate-x-2 transition-all duration-300 sm:group-hover:opacity-100 sm:group-hover:translate-x-0 bg-[#FFA800] sm:bg-transparent text-white sm:text-[#FFA800] px-3 py-1.5 rounded-full sm:rounded-none sm:px-0 sm:py-0">
+          <span className="text-[11px] sm:text-xs font-semibold bg-[#FFA800] text-white sm:bg-transparent sm:text-[#FFA800] opacity-100 sm:opacity-0 transition-all duration-300 sm:group-hover:opacity-100 sm:group-hover:translate-x-0 px-3 py-1.5 rounded-full sm:rounded-none sm:px-0 sm:py-0 -translate-x-2">
             View Experts
           </span>
           <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-all duration-300 sm:group-hover:bg-[#FFA800] sm:group-hover:text-white sm:group-hover:rotate-[-45deg] hover:bg-amber-700 hover:text-white">
@@ -115,12 +122,62 @@ export default function BrowseByCategoryPage({
 }: {
   onCategoryClick?: (category: string) => void;
 }) {
+  const [categories, setCategories] = useState<CategoryDisplay[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await categoriesAPI.getAll({ isActive: true });
+        const apiCategories = response.data.data || [];
+
+        if (apiCategories.length > 0) {
+          // Use categories from API
+          setCategories(apiCategories.map(c => ({
+            title: c.title,
+            subtitle: c.subtitle,
+            image: c.image,
+          })));
+        } else {
+          // Fallback to default categories
+          setCategories(defaultCategories.map(c => ({
+            title: c.title,
+            subtitle: c.subtitle,
+            image: c.image,
+          })));
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        // Fallback to default categories on error
+        setCategories(defaultCategories.map(c => ({
+          title: c.title,
+          subtitle: c.subtitle,
+          image: c.image,
+        })));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleExplore = (category: string) => {
     if (onCategoryClick) onCategoryClick(category);
   };
 
+  if (loading) {
+    return (
+      <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:py-16 lg:py-24">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#FFA800]" />
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-10 sm:py-16 lg:py-24">
+    <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-12 lg:py-16">
       {/* Modern Centered Header */}
       <div className="mb-10 sm:mb-16 text-center">
         <span className="mb-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[#FFA800]">

@@ -6,8 +6,8 @@ import Header from "./components/header";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-// Import sync utility for development
-import "./utils/syncClientProfile";
+// Note: syncClientProfile utility is available via browser console when needed
+// Import removed to prevent side effects on app load
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -29,81 +29,7 @@ function ScrollToTop() {
   return null;
 }
 
-// Clear session on app initialization
-function ClearSessionOnLoad() {
-  useEffect(() => {
-    const clearSessionOnVisit = () => {
-      try {
-        // List of all possible token/storage keys to clear
-        const storageKeys = [
-          "token",
-          "accessToken",
-          "refreshToken",
-          "user",
-          "userData",
-          "auth_token",
-          "authToken",
-          "session",
-          "sessionId",
-          "userId",
-          "user_id",
-          "isLoggedIn",
-          "loginStatus",
-          "userProfile",
-          "profile",
-        ];
 
-        // Clear localStorage
-        storageKeys.forEach((key) => {
-          localStorage.removeItem(key);
-          sessionStorage.removeItem(key);
-        });
-
-        // Clear cookies - comprehensive method
-        const cookies = document.cookie.split(";");
-        const domain = window.location.hostname;
-        const path = "/";
-
-        cookies.forEach((cookie) => {
-          const cookieParts = cookie.trim().split("=");
-          const cookieName = cookieParts[0];
-
-          // Set expiration to past date to delete
-          const expirationDate = new Date(0).toUTCString();
-
-          // Delete cookie with various settings to ensure it's cleared
-          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path};`;
-          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; domain=${domain};`;
-          document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; domain=.${domain};`;
-          document.cookie = `${cookieName}=; expires=${expirationDate}; path=/;`;
-
-          // Also try to clear secure cookies if applicable
-          if (window.location.protocol === "https:") {
-            document.cookie = `${cookieName}=; expires=${expirationDate}; path=${path}; Secure;`;
-          }
-        });
-
-        // Clear any service worker cache if needed
-        if ("caches" in window) {
-          caches.keys().then((cacheNames) => {
-            cacheNames.forEach((cacheName) => {
-              caches.delete(cacheName);
-            });
-          });
-        }
-
-        console.log("Session cleared on app initialization");
-      } catch (error) {
-        console.error("Error clearing session:", error);
-      }
-    };
-
-    // Run only once when app loads
-    clearSessionOnVisit();
-  }, []); // Empty dependency array ensures it runs only once on mount
-
-  return null;
-}
 
 // API Configuration
 const baseURL = "https://api.legalnetwork.in";
@@ -231,19 +157,21 @@ const HIDE_CHROME_PATTERNS = [
   "/auth/register",
 ];
 
+import MobileNav from "./components/MobileNav";
+
 function AppShell() {
   const { pathname } = useLocation();
   const hideChrome = HIDE_CHROME_PATTERNS.some((p) => matchPath(p, pathname));
 
   return (
     <div className="flex min-h-screen flex-col">
-      <ClearSessionOnLoad /> {/* Add this component */}
       <ScrollToTop />
       {!hideChrome && <Header />}
-      <main className="flex-1">
+      <main className="flex-1 pb-16 md:pb-0">
         <AppRoutes />
       </main>
       {!hideChrome && <Footer />}
+      {!hideChrome && <MobileNav />}
     </div>
   );
 }

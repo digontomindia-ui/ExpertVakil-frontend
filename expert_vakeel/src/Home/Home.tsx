@@ -11,6 +11,7 @@ import { queryAPI, publicUserAPI } from "../services/api";
 import type { Query } from "../services/api";
 import useAuth from "../hooks/useAuth";
 import ServiceList from "../app/Service/ServiceList";
+import QuickAccessGrid from "../components/QuickAccessGrid";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -241,10 +242,6 @@ export default function Home() {
   };
 
   const handleAnswerQuery = (queryId: string) => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
     navigate(`/queries/${queryId}`);
   };
 
@@ -506,7 +503,7 @@ export default function Home() {
       {/* Navigation Buttons Section */}
       <section className="sm:mx-auto sm:max-w-screen-xl py-6 sm:py-10 md:py-12">
         <div className="sm:ml-10 mb-6 sm:mb-8 px-4">
-          <h2 className="text-xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">
+          <h2 className="text-xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 text-center sm:text-left">
             Explore Our Services
           </h2>
           <p className="hidden sm:block text-gray-600 text-sm md:text-base">
@@ -514,7 +511,11 @@ export default function Home() {
           </p>
         </div>
 
-        <ServiceList />
+        <QuickAccessGrid />
+
+        <div className="hidden md:block">
+          <ServiceList />
+        </div>
       </section>
 
       <TopRatedProfiles />
@@ -522,13 +523,13 @@ export default function Home() {
       <BrowseByCategory onCategoryClick={handleCategoryClick} />
 
       {/* Explore Or Ask Legal Queries */}
-      <section className="relative overflow-hidden bg-[#FBFBFB] py-16 sm:py-24">
+      <section className="relative overflow-hidden bg-[#FBFBFB] py-8 sm:py-12">
         {/* Background Decorative Element */}
         <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 h-64 w-64 rounded-full bg-[#FFA800]/5 blur-3xl pointer-events-none" />
 
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6">
           {/* Header */}
-          <div className="mb-10 sm:mb-16">
+          <div className="mb-6 sm:mb-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
               <div className="max-w-xl text-left">
                 <div className="flex items-center gap-2 mb-4">
@@ -544,34 +545,38 @@ export default function Home() {
                   Get expert legal advice and insights from verified advocates and law firms across India.
                 </p>
               </div>
-              <button
-                onClick={() => navigate('/queries')}
-                className="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 hover:border-[#FFA800]/20 hover:shadow-md"
-              >
-                View All Community <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 text-[#FFA800]" />
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Navigation Buttons (Desktop) */}
+                <div className="hidden items-center gap-2 sm:flex mr-2">
+                  <button
+                    aria-label="Scroll left"
+                    onClick={() => scrollBy("left")}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm transition-all hover:bg-[#FFA800] hover:text-white hover:shadow-lg active:scale-95"
+                  >
+                    <FaChevronLeft className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="Scroll right"
+                    onClick={() => scrollBy("right")}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm transition-all hover:bg-[#FFA800] hover:text-white hover:shadow-lg active:scale-95"
+                  >
+                    <FaChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <button
+                  onClick={() => navigate('/queries')}
+                  className="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 hover:border-[#FFA800]/20 hover:shadow-md whitespace-nowrap"
+                >
+                  View All Community <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 text-[#FFA800]" />
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Controls + Row */}
           <div className="relative">
-            {/* Navigation Buttons */}
-            <div className="absolute -top-24 right-0 hidden items-center gap-2 sm:flex">
-              <button
-                aria-label="Scroll left"
-                onClick={() => scrollBy("left")}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm transition-all hover:bg-[#FFA800] hover:text-white hover:shadow-lg active:scale-95"
-              >
-                <FaChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                aria-label="Scroll right"
-                onClick={() => scrollBy("right")}
-                className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm transition-all hover:bg-[#FFA800] hover:text-white hover:shadow-lg active:scale-95"
-              >
-                <FaChevronRight className="h-4 w-4" />
-              </button>
-            </div>
+            {/* Cards scroller */}
 
             {/* Cards scroller */}
             <div

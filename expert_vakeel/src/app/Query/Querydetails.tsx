@@ -14,7 +14,7 @@ import {
   Linkedin,
   Copy,
 } from "lucide-react";
-import {Link} from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { queryAPI, queryAnswerAPI, publicQueryAnswerAPI } from "../../services/api";
 import type { Query, QueryAnswer } from "../../services/api";
 import { useUser } from "../../context/UserContext";
@@ -23,6 +23,7 @@ import { useUser } from "../../context/UserContext";
 export default function Querydetails() {
   const { id } = useParams<{ id: string }>();
   const { user } = useUser();
+  const navigate = useNavigate();
 
   // Query state
   const [query, setQuery] = useState<Query | null>(null);
@@ -122,7 +123,13 @@ export default function Querydetails() {
 
 
   const postReply = async () => {
-    if (!reply.trim() || !query || !user) return;
+    if (!reply.trim() || !query) return;
+
+    if (!user) {
+      alert("Please login to post an answer.");
+      navigate("/login");
+      return;
+    }
 
     try {
       const answerData = {
@@ -443,7 +450,7 @@ export default function Querydetails() {
               community.
             </p>
             <Link
-              to="/queries/ask"
+              to="/queries"
               className="mt-4 inline-flex items-center gap-2 rounded-full bg-black px-5 py-2 text-[12px] font-semibold text-white hover:opacity-90"
             >
               <MessageSquareMore className="h-4 w-4" />

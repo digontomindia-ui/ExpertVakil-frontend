@@ -56,7 +56,7 @@ const SOCIAL = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0B0B0B] text-gray-300 overflow-x-hidden" role="contentinfo">
+    <footer className="bg-[#0B0B0B] text-gray-300 overflow-x-hidden pb-20 md:pb-0" role="contentinfo">
       <div className={`${WRAP} py-8 sm:py-10`}>
         {/* ⬇️ two columns by default, 3 on md, 5 on lg */}
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-5 [&>*]:min-w-0">

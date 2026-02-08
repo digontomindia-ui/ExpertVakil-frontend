@@ -17,6 +17,8 @@ import ServiceDetail from "../app/Service/ServiceDetail";
 
 import MyBookings from "../app/Service/MyBookings";
 import PrivacyPolicyLegalNetwork from "../app/Privacy/Privacy";
+import NewsPage from "../app/News/NewsPage";
+import ChallanStatus from "../app/Challan/ChallanStatus";
 
 
 export default function AppRoutes() {
@@ -31,13 +33,15 @@ export default function AppRoutes() {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/support" element={<SupportPage />} />
       <Route path="/queries/:id" element={<Querydetails />} />
-      <Route path="/querypage" element={<QueryPage />} />
+      <Route path="/queries" element={<QueryPage />} />
       <Route path="/blogs" element={<BlogListing />} />
       <Route path="/blog/:id" element={<BlogDetail />} />
       <Route path="/services" element={<ServiceList />} />
       <Route path="/service/:id" element={<ServiceDetail />} />
       <Route path="/my-bookings" element={<MyBookings />} />
       <Route path="/privacypolicy" element={<PrivacyPolicyLegalNetwork />} />
+      <Route path="/legal-news" element={<NewsPage />} />
+      {/* <Route path="/challan-status" element={<ChallanStatus />} /> */}
     </Routes>
   );
 }

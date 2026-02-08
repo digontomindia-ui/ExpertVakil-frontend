@@ -1,5 +1,4 @@
-// src/Query/Query.tsx  (React + TypeScript)
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Send,
@@ -7,8 +6,12 @@ import {
   User,
   AlertCircle,
   Check,
+  Loader,
+  MapPin,
+  Search,
+  Phone
 } from "lucide-react";
-import { queryAPI, clientAPI } from "../../services/api";
+import api, { queryAPI, clientAPI, publicUserAPI } from "../../services/api";
 import type { Query, QueryInput } from "../../services/api";
 import { useUser } from "../../context/UserContext";
 
@@ -40,6 +43,19 @@ const CATEGORIES = [
   { value: "supreme-court-matters", label: "Supreme Court Matters" },
   { value: "forums-tribunal-matters", label: "Forums and Tribunal Matters" },
   { value: "business-matters", label: "Business Matters" },
+];
+
+const CITY_OPTIONS = [
+  "Chandigarh",
+  "Mohali",
+  "Panchkula",
+  "Delhi",
+  "Mumbai",
+  "Bengaluru",
+  "Kolkata",
+  "Chennai",
+  "Hyderabad",
+  "Pune",
 ];
 
 const MOCK_QUESTIONS: Question[] = Array.from({ length: 9 }).map((_, i) => ({
@@ -160,8 +176,24 @@ export default function QueryPage() {
   const [askTitle, setAskTitle] = useState("");
   const [askCategory, setAskCategory] = useState<string>(CATEGORIES[0].value);
   const [askContent, setAskContent] = useState("");
+  const [guestName, setGuestName] = useState("");
   const [posting, setPosting] = useState(false);
   const [postStatus, setPostStatus] = useState<"" | "success" | "error">("");
+  const [postMessage, setPostMessage] = useState("");
+
+  // OTP State (similar to ServiceDetail)
+  const [formMobile, setFormMobile] = useState("");
+  const [formCity, setFormCity] = useState("");
+  const [citySearch, setCitySearch] = useState("");
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [verificationId, setVerificationId] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [cities, setCities] = useState<string[]>(CITY_OPTIONS);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
 
   // ——— Recent 7 Days Queries
   const [recent7Days, setRecent7Days] = useState<Question[]>([]);
@@ -180,37 +212,22 @@ export default function QueryPage() {
   // ——— User authentication (real user data)
   const { user, loading: userLoading } = useUser();
 
-  // Verify authentication with backend token/ID validation
+  // Verify authentication (no longer redirects)
   useEffect(() => {
     const verifyAuthentication = async () => {
       try {
         const authResult = await clientAPI.verifyAuth();
-        
         if (authResult.authenticated && authResult.user) {
-          const userId = authResult.user.id || authResult.user._id;
-          
-          // Verify user has valid ID
-          if (userId) {
-            setIsAuthenticated(true);
-            setIsAuthenticating(false);
-            return;
-          }
+          setIsAuthenticated(true);
         }
-        
-        // If authentication fails, redirect to login
-        setIsAuthenticated(false);
-        setIsAuthenticating(false);
-        navigate("/login", { replace: true });
       } catch (error) {
         console.error("Authentication verification failed:", error);
-        setIsAuthenticated(false);
+      } finally {
         setIsAuthenticating(false);
-        navigate("/login", { replace: true });
       }
     };
-
     verifyAuthentication();
-  }, [navigate]);
+  }, []);
 
   // Load queries from backend on component mount
   useEffect(() => {
@@ -274,12 +291,12 @@ export default function QueryPage() {
 
   // Reload page when navigating to this route
   useEffect(() => {
-    if (location.pathname === '/querypage') {
+    if (location.pathname === '/queries') {
       const navigationKey = location.key || 'initial';
-      const lastNavigationKey = sessionStorage.getItem('querypage_last_navigation');
+      const lastNavigationKey = sessionStorage.getItem('queries_last_navigation');
 
       if (lastNavigationKey !== navigationKey) {
-        sessionStorage.setItem('querypage_last_navigation', navigationKey);
+        sessionStorage.setItem('queries_last_navigation', navigationKey);
         window.location.reload();
       }
     }
@@ -330,25 +347,13 @@ export default function QueryPage() {
     return grouped;
   }, [myQueries]);
 
-  // Show loading while verifying authentication
-  if (isAuthenticating || userLoading) {
+  // Show loading while verifying initial state
+  if (isAuthenticating && !userLoading) {
     return (
       <main className="min-h-[100dvh] bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
-          <p className="text-sm text-gray-600">Verifying authentication...</p>
-        </div>
-      </main>
-    );
-  }
-
-  // Don't render if not authenticated (redirect will happen)
-  if (!isAuthenticated || !user) {
-    return (
-      <main className="min-h-[100dvh] bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
-          <p className="text-sm text-gray-600">Redirecting to login...</p>
+          <p className="text-sm text-gray-600">Loading forum...</p>
         </div>
       </main>
     );
@@ -366,6 +371,61 @@ export default function QueryPage() {
   };
 
   // Handle back to main view
+  // Fetch cities from API (similar to home page)
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await publicUserAPI.getAll({
+          limit: "1000",
+        });
+
+        if (response.data && Array.isArray(response.data.data)) {
+          // Extract unique cities from users
+          const citiesSet = new Set<string>();
+          response.data.data.forEach((user: any) => {
+            if (user.city) {
+              const cleanedCity = user.city.trim();
+              if (cleanedCity) {
+                citiesSet.add(cleanedCity);
+              }
+            }
+          });
+
+          const finalCities = Array.from(citiesSet).sort();
+          if (finalCities.length > 0) {
+            setCities(finalCities);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching cities:", err);
+        // Keep default cities on error
+      }
+    };
+
+    fetchCities();
+  }, []);
+
+  // Filter cities based on search
+  const filteredCities = useMemo(() => {
+    if (!citySearch.trim()) return cities;
+    const regex = new RegExp(citySearch.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    return cities.filter((city) => regex.test(city));
+  }, [cities, citySearch]);
+
+  // Handle click outside city dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target as Node)) {
+        setCityDropdownOpen(false);
+      }
+    };
+
+    if (cityDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [cityDropdownOpen]);
+
   const handleBackToMain = () => {
     setSelectedCategory(null);
     setShowingMyCategoryQueries(false);
@@ -373,22 +433,41 @@ export default function QueryPage() {
 
 
   // ——— API: Post a new query
-  const postNow = async () => {
+  const postNow = async (verifiedClientId?: string) => {
     // basic validation
-    if (!askTitle.trim() || !askContent.trim()) {
+    const displayName = user?.name || user?.fullName || guestName.trim();
+    if (!askTitle.trim() || !askContent.trim() || !displayName) {
       setPostStatus("error");
+      setPostMessage("Please fill in all required fields.");
+      return;
+    }
+
+    // If not logged in and not verified yet, trigger OTP flow
+    if (!user && !otpVerified && !verifiedClientId) {
+      if (!formMobile || !/^[0-9]{10}$/.test(formMobile)) {
+        setPostStatus("error");
+        setPostMessage("Please enter a valid 10-digit mobile number.");
+        return;
+      }
+      if (!formCity) {
+        setPostStatus("error");
+        setPostMessage("Please select your city.");
+        return;
+      }
+      await handleSendOtp();
       return;
     }
 
     setPosting(true);
     setPostStatus("");
+    setPostMessage("");
 
     try {
       const payload: QueryInput = {
         title: askTitle.trim(),
         description: askContent.trim(),
-        askedByName: user?.name || user?.fullName || "Anonymous",
-        askedById: user?.id || user?._id || "anonymous-user",
+        askedByName: displayName,
+        askedById: user?.id || user?._id || verifiedClientId || localStorage.getItem("clientId") || "anonymous-user",
         answersCount: 0,
       };
 
@@ -399,16 +478,101 @@ export default function QueryPage() {
       }
 
       setPostStatus("success");
+      setPostMessage("Your query has been posted successfully!");
 
       // Reset form
       setAskTitle("");
       setAskContent("");
+      setGuestName("");
+      setFormMobile("");
+      setFormCity("");
+      setOtp("");
+      setOtpVerified(false);
+      setShowOtpInput(false);
       setAskCategory(CATEGORIES[0].value);
     } catch (err) {
       console.error("Error posting query:", err);
       setPostStatus("error");
+      setPostMessage("Failed to post query. Please try again.");
     } finally {
       setPosting(false);
+    }
+  };
+
+  // Send OTP
+  const handleSendOtp = async () => {
+    setSendingOtp(true);
+    setPostStatus("");
+    setPostMessage("");
+
+    try {
+      const response = await api.post("/api/verify/generate-otp", {
+        name: guestName || "User",
+        city: formCity,
+        phoneNumber: formMobile,
+      });
+
+      if (response.data.success) {
+        setVerificationId(response.data.verificationId);
+        setShowOtpInput(true);
+        setPostStatus("success");
+        setPostMessage("OTP sent to your mobile number");
+
+        // For testing - show OTP in console
+        if (response.data.testOtp) {
+          console.log("🔢 Test OTP:", response.data.testOtp);
+        }
+      } else {
+        throw new Error(response.data.message || "Failed to send OTP");
+      }
+    } catch (err: any) {
+      console.error("Error sending OTP:", err);
+      setPostStatus("error");
+      setPostMessage(err.response?.data?.message || "Failed to send OTP. Please try again.");
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  // Verify OTP
+  const handleVerifyOtp = async () => {
+    if (!otp || otp.length < 6) {
+      setPostStatus("error");
+      setPostMessage("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    setVerifyingOtp(true);
+    setPostStatus("");
+
+    try {
+      const response = await api.post("/api/verify/verify-otp", {
+        verificationId,
+        otp,
+        phoneNumber: formMobile,
+      });
+
+      if (response.data.success) {
+        setOtpVerified(true);
+        setShowOtpInput(false);
+
+        // Store client info
+        if (response.data.clientId) {
+          localStorage.setItem("clientId", response.data.clientId);
+        }
+        localStorage.setItem("phone", formMobile);
+
+        // Now final post
+        await postNow(response.data.clientId);
+      } else {
+        throw new Error(response.data.message || "Invalid OTP");
+      }
+    } catch (err: any) {
+      console.error("Error verifying OTP:", err);
+      setPostStatus("error");
+      setPostMessage(err.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
@@ -437,11 +601,10 @@ export default function QueryPage() {
             {/* form status */}
             {postStatus && (
               <div
-                className={`mt-3 flex items-center gap-2 rounded-xl border p-3 text-sm ${
-                  postStatus === "success"
-                    ? "border-green-200 bg-green-50 text-green-800"
-                    : "border-red-200 bg-red-50 text-red-700"
-                }`}
+                className={`mt-3 flex items-center gap-2 rounded-xl border p-3 text-sm ${postStatus === "success"
+                  ? "border-green-200 bg-green-50 text-green-800"
+                  : "border-red-200 bg-red-50 text-red-700"
+                  }`}
               >
                 {postStatus === "success" ? (
                   <Check className="h-4 w-4" />
@@ -482,46 +645,181 @@ export default function QueryPage() {
               </div>
 
 
-              {/* Name (autofetch) + City (optional) */}
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {/* Name (autofetch) + City (searchable for guests) */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="relative">
                   <User className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
-                    value={isUserLoaded ? (user?.name || user?.fullName || "") : ""}
-                    readOnly
-                    placeholder={isUserLoaded ? "Your name" : "Loading user data..."}
-                    className="w-full rounded-full bg-white px-4 pl-10 py-3 text-[14px] shadow-sm outline-none placeholder:text-gray-400"
+                    value={user ? (user.name || user.fullName || "") : guestName}
+                    onChange={(e) => !user && setGuestName(e.target.value)}
+                    readOnly={!!user || showOtpInput || otpVerified}
+                    placeholder={user ? "Your name" : "Your Name (Required)"}
+                    className="w-full rounded-full bg-white px-4 pl-10 py-3 text-[14px] shadow-sm outline-none placeholder:text-gray-400 disabled:bg-gray-50 focus:ring-2 focus:ring-blue-400"
                   />
                 </div>
-                {/* <input
-                  value={user?.city || ""}
-                  readOnly
-                  placeholder="City (will be fetched automatically)"
-                  className="w-full rounded-full bg-white px-4 py-3 text-[14px] placeholder:text-gray-400 shadow-sm outline-none"
-                /> */}
+
+                {/* City Dropdown for Guests */}
+                {!user ? (
+                  <div ref={cityDropdownRef} className="relative">
+                    <button
+                      type="button"
+                      onClick={() => !otpVerified && !showOtpInput && setCityDropdownOpen(!cityDropdownOpen)}
+                      disabled={showOtpInput || otpVerified}
+                      className="w-full border-none rounded-full bg-white px-4 py-3 text-[14px] shadow-sm outline-none text-left flex items-center justify-between disabled:bg-gray-50"
+                    >
+                      <span className={formCity ? "text-gray-900" : "text-gray-400"}>
+                        {formCity || "Select City (Required)"}
+                      </span>
+                      <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${cityDropdownOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {cityDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        {/* Search Input */}
+                        <div className="p-3 border-b border-gray-50">
+                          <div className="relative flex items-center">
+                            <Search className="w-4 h-4 text-gray-400 absolute left-3" />
+                            <input
+                              type="text"
+                              value={citySearch}
+                              onChange={(e) => setCitySearch(e.target.value)}
+                              placeholder="Search City"
+                              className="w-full pl-9 pr-4 py-2 text-sm border-none bg-gray-50 rounded-lg outline-none focus:ring-1 focus:ring-blue-100"
+                              autoFocus
+                            />
+                          </div>
+                        </div>
+
+                        {/* City List */}
+                        <div className="max-h-60 overflow-y-auto">
+                          {filteredCities.length > 0 ? (
+                            filteredCities.map((city) => (
+                              <button
+                                key={city}
+                                type="button"
+                                onClick={() => {
+                                  setFormCity(city);
+                                  setCityDropdownOpen(false);
+                                  setCitySearch("");
+                                }}
+                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${formCity === city
+                                  ? "bg-blue-50 text-[#1a365d] font-bold"
+                                  : "text-gray-600 hover:bg-gray-50"
+                                  }`}
+                              >
+                                {city}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-4 text-center text-xs text-gray-400">
+                              No cities found
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      value={user?.city || ""}
+                      readOnly
+                      placeholder="City"
+                      className="w-full rounded-full bg-gray-50 px-4 pl-10 py-3 text-[14px] shadow-sm outline-none placeholder:text-gray-400"
+                    />
+                  </div>
+                )}
               </div>
+
+              {/* Mobile Number for Guests */}
+              {!user && (
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <div className="flex gap-2">
+                    <input
+                      type="tel"
+                      value={formMobile}
+                      onChange={(e) => setFormMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                      readOnly={showOtpInput || otpVerified}
+                      placeholder="10-digit mobile number (Required)"
+                      maxLength={10}
+                      className="w-full rounded-full bg-white px-4 pl-10 py-3 text-[14px] shadow-sm outline-none placeholder:text-gray-400 disabled:bg-gray-50"
+                    />
+                    {otpVerified && (
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-50 text-green-600 shadow-sm shrink-0">
+                        <Check className="h-5 w-5" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* OTP Input */}
+              {showOtpInput && !otpVerified && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="mb-2 text-xs font-semibold text-blue-600 ml-4 italic">Enter 6-digit code sent to {formMobile}</div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="Enter 6-digit OTP"
+                      maxLength={6}
+                      className="flex-1 rounded-full bg-white px-6 py-3 text-[14px] shadow-sm outline-none border-2 border-blue-100 focus:border-blue-400 tracking-[0.2em] font-black text-center"
+                    />
+                    <button
+                      onClick={handleVerifyOtp}
+                      disabled={verifyingOtp || otp.length < 6}
+                      className="rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md"
+                    >
+                      {verifyingOtp ? <Loader className="h-5 w-5 animate-spin" /> : "Verify Code"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
 
               {/* Query details */}
               <textarea
                 value={askContent}
                 onChange={(e) => setAskContent(e.target.value)}
-                placeholder="Ask Your Query"
+                readOnly={showOtpInput && !otpVerified}
+                placeholder="Ask Your Query (Minimum 10 words for better results)"
                 rows={5}
-                className="w-full resize-none rounded-[22px] bg-white px-4 py-3 text-[14px] shadow-sm outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full resize-none rounded-[22px] bg-white px-4 py-3 text-[14px] shadow-sm outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50"
               />
 
-              {/* post */}
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-                <button
-                  onClick={postNow}
-                  disabled={posting || !isUserLoaded}
-                  className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
-                >
-                  <Send className="h-4 w-4" />
-                  {posting ? "Posting…" : !isUserLoaded ? "Loading…" : "Post Now"}
-                </button>
-              </div>
+              {/* Status Display */}
+              {postStatus && (
+                <div className={`flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium animate-in fade-in duration-300 ${postStatus === "success" ? "bg-green-50 text-green-700 border border-green-100" : "bg-red-50 text-red-700 border border-red-100"
+                  }`}>
+                  {postStatus === "success" ? <Check className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                  {postMessage}
+                </div>
+              )}
+
+              {/* Action Button */}
+              {!showOtpInput && (
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    onClick={() => postNow()}
+                    disabled={posting || sendingOtp}
+                    className="group inline-flex items-center gap-2 rounded-full bg-[#1a365d] px-8 py-3 text-sm font-bold text-white transition-all hover:bg-[#2d4a7c] hover:shadow-lg disabled:opacity-60"
+                  >
+                    {posting || sendingOtp ? (
+                      <Loader className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+                    )}
+                    {posting ? "Posting…" : sendingOtp ? "Sending OTP…" : !user && !otpVerified ? "Verify & Post Now" : "Post Your Query Now"}
+                  </button>
+
+                  {!user && !otpVerified && (
+                    <p className="text-[11px] text-gray-400 italic font-medium ml-2">Verification required for guest posts</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -530,87 +828,87 @@ export default function QueryPage() {
 
         {/* ================== Find Your Queries Section ================== */}
         <section className="mt-10 md:mt-12">
-  <h3 className="text-xl font-semibold">
-    Find Your Queries All At One Place
-  </h3>
-  <p className="text-sm text-gray-500">
-    You May Ask Your Queries Directly From Expert Vakeel Team Or Our
-    Community.
-  </p>
-
-  {/* Responsive grid — 2 per row on mobile, 4 on md+ */}
-  <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
-    {[
-      {
-        title: "Civil Matters Queries",
-        desc:
-          "Ask your civil matters queries from Expert Vakeel Team or community & get answers from experts & other users",
-        img: "/assets/images4.png",
-        tone: "bg-green-100",
-        category: "civil-matters",
-      },
-      {
-        title: "Criminal Matters Queries",
-        desc:
-          "Ask your criminal matters queries from Expert Vakeel Team or community & get answers from experts & other users",
-        img: "/assets/images5.png",
-        tone: "bg-gray-100",
-        category: "criminal-matters",
-      },
-      {
-        title: "Supreme Court Matters",
-        desc:
-          "Ask your supreme court queries from Expert Vakeel Team or community & get answers from experts & other users",
-        img: "/assets/image6.png",
-        tone: "bg-rose-100",
-        category: "supreme-court-matters",
-      },
-      {
-        title: "Taxation & Corporate",
-        desc:
-          "Ask your taxation & corporate queries from Expert Vakeel Team or community & get answers from experts & other users",
-        img: "/assets/image7.png",
-        tone: "bg-yellow-100",
-        category: "taxation-matters",
-      },
-    ].map((c, i) => (
-      <div
-        key={i}
-        className={`${c.tone} rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6`}
-      >
-        {/* Card Content */}
-        <div className="min-h-28 sm:min-h-32">
-          <h4 className="text-sm sm:text-lg md:text-2xl font-semibold leading-tight">
-            {c.title}
-          </h4>
-          <p className="mt-1 sm:mt-2 text-[11px] sm:text-sm text-gray-700 line-clamp-3">
-            {c.desc}
+          <h3 className="text-xl font-semibold">
+            Find Your Queries All At One Place
+          </h3>
+          <p className="text-sm text-gray-500">
+            You May Ask Your Queries Directly From Expert Vakeel Team Or Our
+            Community.
           </p>
-        </div>
 
-        {/* Button */}
-        <button
-          onClick={() => handleViewCategory(c.category)}
-          className="mt-3 sm:mt-4 rounded-full bg-black px-3 sm:px-5 py-1.5 sm:py-2 text-[11px] sm:text-sm font-semibold text-white hover:opacity-90 transition"
-        >
-          View
-        </button>
+          {/* Responsive grid — 2 per row on mobile, 4 on md+ */}
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 md:gap-6">
+            {[
+              {
+                title: "Civil Matters Queries",
+                desc:
+                  "Ask your civil matters queries from Expert Vakeel Team or community & get answers from experts & other users",
+                img: "/assets/images4.png",
+                tone: "bg-green-100",
+                category: "civil-matters",
+              },
+              {
+                title: "Criminal Matters Queries",
+                desc:
+                  "Ask your criminal matters queries from Expert Vakeel Team or community & get answers from experts & other users",
+                img: "/assets/images5.png",
+                tone: "bg-gray-100",
+                category: "criminal-matters",
+              },
+              {
+                title: "Supreme Court Matters",
+                desc:
+                  "Ask your supreme court queries from Expert Vakeel Team or community & get answers from experts & other users",
+                img: "/assets/image6.png",
+                tone: "bg-rose-100",
+                category: "supreme-court-matters",
+              },
+              {
+                title: "Taxation & Corporate",
+                desc:
+                  "Ask your taxation & corporate queries from Expert Vakeel Team or community & get answers from experts & other users",
+                img: "/assets/image7.png",
+                tone: "bg-yellow-100",
+                category: "taxation-matters",
+              },
+            ].map((c, i) => (
+              <div
+                key={i}
+                className={`${c.tone} rounded-2xl sm:rounded-3xl p-4 sm:p-5 md:p-6`}
+              >
+                {/* Card Content */}
+                <div className="min-h-28 sm:min-h-32">
+                  <h4 className="text-sm sm:text-lg md:text-2xl font-semibold leading-tight">
+                    {c.title}
+                  </h4>
+                  <p className="mt-1 sm:mt-2 text-[11px] sm:text-sm text-gray-700 line-clamp-3">
+                    {c.desc}
+                  </p>
+                </div>
 
-        {/* Image */}
-        <div className="relative mt-4 sm:mt-6 h-24 sm:h-40 overflow-hidden rounded-2xl sm:rounded-3xl">
-          <img
-            src={c.img}
-            alt={c.title}
-            className="h-full w-full object-cover"
-          />
-        </div>
-      </div>
-    ))}
-  </div>
-</section>
+                {/* Button */}
+                <button
+                  onClick={() => handleViewCategory(c.category)}
+                  className="mt-3 sm:mt-4 rounded-full bg-black px-3 sm:px-5 py-1.5 sm:py-2 text-[11px] sm:text-sm font-semibold text-white hover:opacity-90 transition"
+                >
+                  View
+                </button>
+
+                {/* Image */}
+                <div className="relative mt-4 sm:mt-6 h-24 sm:h-40 overflow-hidden rounded-2xl sm:rounded-3xl">
+                  <img
+                    src={c.img}
+                    alt={c.title}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
 
-         {/* ================== My Category Queries ================== */}
+        {/* ================== My Category Queries ================== */}
         {showingMyCategoryQueries && selectedCategory && (
           <section className="mt-12">
             <div className="mb-5 flex items-center justify-between">
@@ -832,7 +1130,7 @@ export default function QueryPage() {
             )}
           </div>
 
-          
+
 
           {loadingRecent7Days ? (
             <div className="flex items-center justify-center py-12">
@@ -915,7 +1213,7 @@ export default function QueryPage() {
           )}
         </section>
 
-        
+
 
         {/* ================== FAQ ================== */}
         <section className="mt-12">
@@ -969,15 +1267,13 @@ function Faq() {
                 {it.q}
               </h4>
               <ChevronDown
-                className={`transition-transform ${
-                  expanded ? "rotate-180" : ""
-                } text-gray-500`}
+                className={`transition-transform ${expanded ? "rotate-180" : ""
+                  } text-gray-500`}
               />
             </button>
             <div
-              className={`overflow-hidden transition-[max-height,opacity] duration-300 ${
-                expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-              }`}
+              className={`overflow-hidden transition-[max-height,opacity] duration-300 ${expanded ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+                }`}
             >
               <p className="pt-3 max-w-4xl text-[15px] leading-7 text-gray-600">
                 {it.a}

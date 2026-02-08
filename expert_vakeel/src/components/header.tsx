@@ -140,11 +140,19 @@ export default function Header() {
 
               {/* Ask a Question */}
               <Link
-                to="/querypage"
+                to="/queries"
                 className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
               >
                 Ask a Question
               </Link>
+
+              {/* Check Challan */}
+              {/* <Link
+                to="/challan-status"
+                className="text-sm font-black text-[#1a365d] hover:text-[#FFA800] transition-colors bg-blue-50 px-3 py-1 rounded-full border border-blue-100"
+              >
+                Check Challan
+              </Link> */}
 
               {/* Lawyer Signup */}
               <Link
@@ -155,12 +163,12 @@ export default function Header() {
               </Link>
 
               {/* Login / Register */}
-              <Link
+              {/* <Link
                 to="/login"
                 className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
               >
                 Login / Register
-              </Link>
+              </Link> */}
             </nav>
           </div>
 
@@ -234,12 +242,21 @@ export default function Header() {
 
             {/* Ask a Question */}
             <Link
-              to="/querypage"
+              to="/queries"
               onClick={() => setOpen(false)}
               className="block w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FFA800] transition-colors"
             >
               Ask a Question
             </Link>
+
+            {/* Check Challan */}
+            {/* <Link
+              to="/challan-status"
+              onClick={() => setOpen(false)}
+              className="block w-full rounded-lg px-4 py-3 text-sm font-bold text-blue-700 bg-blue-50/50 hover:bg-blue-100/50 transition-colors border-l-4 border-blue-600"
+            >
+              Check Challan
+            </Link> */}
 
             {/* Login / Register */}
             <Link
