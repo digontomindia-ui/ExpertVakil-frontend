@@ -501,19 +501,28 @@ export default function Home() {
       </section>
 
       {/* Navigation Buttons Section */}
-      <section className="sm:mx-auto sm:max-w-screen-xl py-0 sm:py-10 md:py-12">
-        <div className="sm:ml-10 mb-1 sm:mb-8 px-4">
-          <h2 className="text-xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 text-center sm:text-left">
-            Explore Our Services
-          </h2>
-          <p className="hidden sm:block text-gray-600 text-sm md:text-base">
-            Access all our legal services and resources in one place
-          </p>
+      <section className="relative overflow-hidden bg-white py-12 sm:py-16">
+        {/* Background Decorative Element */}
+        <div className="absolute top-0 left-0 -translate-y-1/2 -translate-x-1/4 h-64 w-64 rounded-full bg-[#FFA800]/5 blur-3xl pointer-events-none" />
+
+        <div className="mx-auto max-w-screen-xl px-4">
+          <div className="text-center sm:text-left mb-10">
+            <div className="flex items-center justify-center sm:justify-start gap-2 mb-4">
+              <div className="h-2 w-2 rounded-full bg-[#FFA800] animate-pulse" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#FFA800]">
+                Lawyer Assistance & More
+              </span>
+            </div>
+            <h2 className="text-3xl font-black tracking-tight text-gray-900 sm:text-5xl">
+              Explore Our <span className="text-[#FFA800]">Services</span>
+            </h2>
+            <p className="mt-4 text-sm sm:text-lg text-gray-500 font-medium max-w-2xl">
+              Access all our legal services and resources in one place, designed to help you navigate through complex legal challenges.
+            </p>
+          </div>
         </div>
 
         <QuickAccessGrid />
-
-
       </section>
 
       <TopRatedProfiles />
@@ -521,7 +530,7 @@ export default function Home() {
       <BrowseByCategory onCategoryClick={handleCategoryClick} />
 
       {/* Explore Or Ask Legal Queries */}
-      <section className="relative overflow-hidden bg-[#FBFBFB] py-8 sm:py-12">
+      <section className="relative overflow-hidden bg-[#FBFBFB] pt-8 pb-4 sm:pt-12 sm:pb-6">
         {/* Background Decorative Element */}
         <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 h-64 w-64 rounded-full bg-[#FFA800]/5 blur-3xl pointer-events-none" />
 

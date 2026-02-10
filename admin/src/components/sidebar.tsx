@@ -10,6 +10,7 @@ import {
   LogOut,
   AmpersandIcon,
   MessageSquare,
+  Grid3X3,
 } from "lucide-react";
 import logo from '../assets/logo.jpg';
 import * as Panels from "./panels"; // { Dashboard, Lawyers, Orders, Reports, Docs, Settings }
@@ -108,8 +109,8 @@ export default function AdminSidebarShell() {
           </div>
         )}
 
-        {/* Nav */}
-        <nav className="mt-3 space-y-1 px-2">
+        {/* Nav - Scrollable container */}
+        <nav className="mt-3 space-y-1 px-2 overflow-y-auto pb-20" style={{ maxHeight: 'calc(100vh - 200px)' }}>
           {filteredNav.length === 0 ? (
             !collapsed && (
               <div className="px-3 py-4 text-center">
@@ -142,7 +143,7 @@ export default function AdminSidebarShell() {
         </nav>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 p-3">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-gray-200 p-3 bg-white">
           <button
             onClick={() => {
               logout();
@@ -194,7 +195,7 @@ const ALL_NAV = [
   { key: "Lawyers", label: "Lawyers", icon: UsersIcon },
   { key: "Clients", label: "Clients", icon: UsersIcon },
   { key: "Cases", label: "Case Diary", icon: PackageSearch },
-  { key: "News", label: "News", icon: PackageSearch },
+  { key: "News", label: "Legal News", icon: PackageSearch },
   { key: "Queries", label: "Queries", icon: BarChart3 },
   { key: "Support", label: "Support", icon: MessageSquare },
   { key: "Admins", label: "Admins", icon: AmpersandIcon },
@@ -203,5 +204,7 @@ const ALL_NAV = [
   { key: "Notifications", label: "Notifications", icon: AmpersandIcon },
   { key: "Services", label: "Services", icon: PackageSearch },
   { key: "BookedServices", label: "Booked Services", icon: MessageSquare },
+  { key: "Categories", label: "Categories", icon: Grid3X3 },
   { key: "DeleteRequests", label: "Delete Requests", icon: LogOut },
 ] as const;
+

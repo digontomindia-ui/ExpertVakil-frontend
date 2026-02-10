@@ -1,6 +1,6 @@
-"use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { API_URLS } from "../../config/api";
+import { Search, ChevronDown, MoreVertical, Edit, Trash2, Pencil, Trash, X, Save, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 /**
  * QueriesCenter.tsx (Next.js, TypeScript)
@@ -118,25 +118,95 @@ export default function QueriesCenter() {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState<QueryNorm | null>(null);
 
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const fetchQueries = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(API_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const raw = await res.json();
+      const list = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
+      const normalized = list.map(norm);
+      setItems(normalized);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load queries");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(API_URL, { cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const raw = await res.json();
-        const list = Array.isArray(raw?.data) ? raw.data : Array.isArray(raw) ? raw : [];
-        const normalized = list.map(norm);
-        if (mounted) setItems(normalized);
-      } catch (e: any) {
-        setError(e?.message || "Failed to load queries");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
+    fetchQueries();
   }, []);
+
+  const handleEdit = (item: QueryNorm) => {
+    setActive(item);
+    setEditTitle(item.title);
+    setEditContent(item.content);
+    setEditCategory(item.category);
+    setIsEditing(true);
+    setOpen(true);
+  };
+
+  const handleUpdate = async () => {
+    if (!active) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/${active.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: editTitle,
+          description: editContent,
+          category: editCategory,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update query");
+
+      const updatedItem = { ...active, title: editTitle, content: editContent, category: editCategory };
+      setItems(items.map(it => it.id === active.id ? updatedItem : it));
+      setActive(updatedItem);
+      setIsEditing(false);
+      // Optional: reload from server to be sure
+      // fetchQueries();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this query?")) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) throw new Error("Failed to delete query");
+
+      setItems(items.filter(it => it.id !== id));
+      if (active?.id === id) {
+        setOpen(false);
+        setActive(null);
+      }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const categories = useMemo(() => {
     const s = new Set<string>();
@@ -233,8 +303,85 @@ export default function QueriesCenter() {
         )}
       </main>
 
-      <SlideOver open={open} setOpen={setOpen}>
-        {active && <QueryDetails q={active} />}
+      <SlideOver open={open} setOpen={(v) => {
+        setOpen(v);
+        if (!v) setIsEditing(false);
+      }}>
+        {active && (
+          isEditing ? (
+            <div className="p-6 space-y-4 flex flex-col h-full">
+              <h2 className="text-xl font-bold text-slate-900 mb-2">Edit Query</h2>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Title</label>
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-slate-100 outline-none"
+                  placeholder="Query title"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</label>
+                <input
+                  value={editCategory}
+                  onChange={(e) => setEditCategory(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-slate-100 outline-none"
+                  placeholder="Category"
+                />
+              </div>
+
+              <div className="space-y-1 flex-1 flex flex-col">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Content</label>
+                <textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="w-full flex-1 rounded-xl border border-slate-200 p-3 text-sm focus:ring-2 focus:ring-slate-100 outline-none resize-none"
+                  placeholder="Query description"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t">
+                <button
+                  onClick={handleUpdate}
+                  disabled={saving}
+                  className="flex-1 bg-slate-900 text-white rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="flex-1 bg-white border border-slate-200 text-slate-700 rounded-xl py-3 text-sm font-bold hover:bg-slate-50 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col h-full">
+              <QueryDetails q={active} />
+              <div className="p-6 border-t bg-slate-50 flex gap-3">
+                <button
+                  onClick={() => handleEdit(active)}
+                  className="flex-1 bg-slate-900 text-white rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit Query
+                </button>
+                <button
+                  onClick={() => handleDelete(active.id)}
+                  disabled={deleting}
+                  className="flex-1 bg-white border border-red-200 text-red-600 rounded-xl py-3 text-sm font-bold flex items-center justify-center gap-2 hover:bg-red-50 transition-all disabled:opacity-50"
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  Delete Query
+                </button>
+              </div>
+            </div>
+          )
+        )}
       </SlideOver>
     </div>
   );

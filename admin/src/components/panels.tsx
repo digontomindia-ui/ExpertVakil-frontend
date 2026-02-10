@@ -13,6 +13,7 @@ import BookedServicesPage from "../app/service/booked/BookedServices";
 import SubAdminsCenter from "../app/subadmin/view-all/subadmins";
 import SupportViewall from "../app/support/Viewall";
 import DeleteRequestsPage from "../app/delete-requests/view-all/DeleteRequestsPage";
+import CategoriesPage from "../app/category/CategoriesPage";
 
 export function Dashboard() {
   return <DashboardPage />;
@@ -68,6 +69,10 @@ export function BookedServices() {
 
 export function DeleteRequests() {
   return <DeleteRequestsPage />;
+}
+
+export function Categories() {
+  return <CategoriesPage />;
 }
 
 // Note: SupportDetails and SupportAnswer are used within the SupportViewall component

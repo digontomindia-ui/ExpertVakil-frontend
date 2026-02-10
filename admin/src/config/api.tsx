@@ -70,6 +70,14 @@ const API_CONFIG = {
     DELETE_REQUESTS_BY_USER: (userId: string) => `/api/delete-requests/user/${userId}`,
     DELETE_REQUESTS_BY_STATUS: (status: string) => `/api/delete-requests/status/${status}`,
     DELETE_REQUEST_REVIEW: (id: string) => `/api/delete-requests/${id}/review`,
+
+    // Upload endpoints
+    UPLOAD: '/api/upload',
+
+    // Category endpoints
+    CATEGORIES: '/api/categories',
+    CATEGORY_BY_ID: (id: string) => `/api/categories/${id}`,
+    CATEGORIES_REORDER: '/api/categories/reorder',
   }
 };
 
@@ -972,6 +980,7 @@ export type Service = {
   id: string;
   name: string;
   description?: string;
+  image?: string;
   categories: string[];
   number?: string;
   createdAt?: string;
@@ -1022,6 +1031,48 @@ export const ServicesAPI = {
       path: API_CONFIG.ENDPOINTS.SERVICES,
       signal,
     });
+  },
+};
+
+/* -------------------------------- Upload ---------------------------------- */
+
+export type UploadResponse = {
+  success: boolean;
+  data: {
+    url: string;
+    fileName: string;
+    originalName: string;
+    mimeType: string;
+    size: number;
+    folder: string;
+  };
+};
+
+export const UploadAPI = {
+  /**
+   * Upload a file to Firebase Storage
+   * @param file - The file to upload
+   * @param folder - Optional folder path (default: 'services')
+   */
+  async uploadFile(file: File, folder: string = 'services'): Promise<UploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    const url = getApiUrl(API_CONFIG.ENDPOINTS.UPLOAD);
+
+    const res = await fetch(url, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || `Upload failed: HTTP ${res.status}`);
+    }
+
+    return res.json();
   },
 };
 
@@ -1340,6 +1391,89 @@ export const DeleteRequestsAPI = {
     return request<{ success: boolean; deleted: number }>({
       method: "DELETE",
       path: API_CONFIG.ENDPOINTS.DELETE_REQUESTS,
+      signal,
+    });
+  },
+};
+
+/* ------------------------------ Categories -------------------------------- */
+
+export type Category = {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  order: number;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type CategoryInput = Omit<Category, 'id' | 'createdAt' | 'updatedAt'>;
+
+export const CategoriesAPI = {
+  // Get all categories
+  getAll(params?: { isActive?: boolean }, signal?: AbortSignal) {
+    const searchParams = new URLSearchParams();
+    if (params?.isActive !== undefined) {
+      searchParams.append('isActive', String(params.isActive));
+    }
+    const queryString = searchParams.toString();
+    const path = queryString
+      ? `${API_CONFIG.ENDPOINTS.CATEGORIES}?${queryString}`
+      : API_CONFIG.ENDPOINTS.CATEGORIES;
+
+    return request<{ success: boolean; data: Category[] }>({
+      method: 'GET',
+      path,
+      signal,
+    });
+  },
+
+  // Get category by ID
+  getById(id: string, signal?: AbortSignal) {
+    return request<{ success: boolean; data: Category }>({
+      method: 'GET',
+      path: API_CONFIG.ENDPOINTS.CATEGORY_BY_ID(enc(id)),
+      signal,
+    });
+  },
+
+  // Create category
+  create(body: CategoryInput, signal?: AbortSignal) {
+    return request<{ success: boolean; data: Category }>({
+      method: 'POST',
+      path: API_CONFIG.ENDPOINTS.CATEGORIES,
+      body,
+      signal,
+    });
+  },
+
+  // Update category
+  update(id: string, body: Partial<CategoryInput>, signal?: AbortSignal) {
+    return request<{ success: boolean; data: Category }>({
+      method: 'PATCH',
+      path: API_CONFIG.ENDPOINTS.CATEGORY_BY_ID(enc(id)),
+      body,
+      signal,
+    });
+  },
+
+  // Delete category
+  remove(id: string, signal?: AbortSignal) {
+    return request<{ success: boolean }>({
+      method: 'DELETE',
+      path: API_CONFIG.ENDPOINTS.CATEGORY_BY_ID(enc(id)),
+      signal,
+    });
+  },
+
+  // Reorder categories
+  reorder(categoryIds: string[], signal?: AbortSignal) {
+    return request<{ success: boolean }>({
+      method: 'POST',
+      path: API_CONFIG.ENDPOINTS.CATEGORIES_REORDER,
+      body: { categoryIds },
       signal,
     });
   },

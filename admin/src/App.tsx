@@ -38,6 +38,7 @@ import ServiceEditPage from './app/service/edit/ServiceEditPage'
 import ServicePostPage from './app/service/post/ServicePostPage'
 import BookedServices from './app/service/booked/BookedServices'
 import DeleteRequestsPage from './app/delete-requests/view-all/DeleteRequestsPage'
+import CategoriesPage from './app/category/CategoriesPage'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -359,6 +360,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DeleteRequestsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/categories"
+        element={
+          <ProtectedRoute>
+            <CategoriesPage />
           </ProtectedRoute>
         }
       />

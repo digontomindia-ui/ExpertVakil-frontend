@@ -41,7 +41,7 @@ const FEATURES: Feature[] = [
 
 export default function WhyExpertVakeel() {
   return (
-    <section className="relative overflow-hidden bg-white py-8 sm:py-24 lg:py-32">
+    <section className="relative overflow-hidden bg-white pt-4 pb-12 sm:pt-8 sm:pb-24 lg:pt-12 lg:pb-32">
       {/* Background Accents */}
       <div className="absolute left-0 top-0 -translate-x-1/2 opacity-20 blur-3xl pointer-events-none">
         <div className="h-96 w-96 rounded-full bg-[#FFA800]/10" />
