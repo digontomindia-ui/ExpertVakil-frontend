@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, LayoutGrid, Newspaper, MessageCircle } from "lucide-react";
+import { Home, LayoutGrid, MessageSquare, MessageCircle } from "lucide-react";
 
 export default function MobileNav() {
     const navigate = useNavigate();
@@ -8,7 +8,7 @@ export default function MobileNav() {
     const navItems = [
         { label: "Home", icon: Home, path: "/" },
         { label: "Services", icon: LayoutGrid, path: "/services" },
-        { label: "Legal News", icon: Newspaper, path: "/legal-news" },
+        { label: "Chat", icon: MessageSquare, path: "https://wa.me/919711840150", external: true },
         { label: "Ask a Lawyer", icon: MessageCircle, path: "/queries" },
     ];
 
@@ -25,20 +25,26 @@ export default function MobileNav() {
                 {navItems.map((item) => (
                     <button
                         key={item.label}
-                        onClick={() => navigate(item.path)}
-                        className={`flex flex-col items-center gap-1.5 py-3 transition-all ${isActive(item.path) ? "text-[#1a365d]" : "text-gray-400"
+                        onClick={() => {
+                            if (item.external) {
+                                window.open(item.path, "_blank");
+                            } else {
+                                navigate(item.path);
+                            }
+                        }}
+                        className={`flex flex-col items-center gap-1.5 py-3 transition-all ${!item.external && isActive(item.path) ? "text-[#1a365d]" : "text-gray-400"
                             }`}
                     >
-                        <div className={`relative p-1 ${isActive(item.path) ? "text-[#1a365d]" : "text-gray-400"}`}>
+                        <div className={`relative p-1 ${!item.external && isActive(item.path) ? "text-[#1a365d]" : "text-gray-400"}`}>
                             <item.icon
                                 className="h-[22px] w-[22px]"
-                                strokeWidth={isActive(item.path) ? 2.5 : 2}
+                                strokeWidth={!item.external && isActive(item.path) ? 2.5 : 2}
                             />
-                            {isActive(item.path) && (
+                            {!item.external && isActive(item.path) && (
                                 <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></div>
                             )}
                         </div>
-                        <span className={`text-[11px] font-bold tracking-tight ${isActive(item.path) ? "text-[#1a365d]" : "text-gray-500"}`}>
+                        <span className={`text-[11px] font-bold tracking-tight ${!item.external && isActive(item.path) ? "text-[#1a365d]" : "text-gray-500"}`}>
                             {item.label}
                         </span>
                     </button>

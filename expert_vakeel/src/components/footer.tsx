@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
 
 const WRAP = "mx-auto w-full max-w-[1280px] px-4 sm:px-5 lg:px-6";
-const TITLE = "mb-3 text-[13px] sm:text-[15px] font-semibold text-white tracking-tight";
+const TITLE = "mb-1.5 sm:mb-3 text-[13px] sm:text-[15px] font-semibold text-white tracking-tight";
 const LINK =
   "text-xs sm:text-sm leading-6 text-gray-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded break-words";
 
@@ -42,6 +42,7 @@ const COLUMNS: Column[] = [
       { label: "Help & Support", to: "/support" },
       { label: "Blogs", to: "/blogs" },
       { label: "FAQs", to: "/support" },
+      { label: "All Services", to: "/services" },
       { label: "Download Our App For Lawyers", href: "#", external: false }
     ]
   },
@@ -57,16 +58,16 @@ const SOCIAL = [
 export default function Footer() {
   return (
     <footer className="bg-[#0B0B0B] text-gray-300 overflow-x-hidden pb-20 md:pb-0" role="contentinfo">
-      <div className={`${WRAP} py-8 sm:py-10`}>
+      <div className={`${WRAP} pt-4 pb-0 sm:py-10`}>
         {/* ⬇️ two columns by default, 3 on md, 5 on lg */}
-        <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-5 [&>*]:min-w-0">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:gap-x-8 sm:gap-y-10 md:grid-cols-3 lg:grid-cols-5 [&>*]:min-w-0">
           {COLUMNS.map((col) => (
             <Column key={col.title} {...col} />
           ))}
         </div>
 
         {/* keep this section single-column on mobile */}
-        <div className="mt-10 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+        <div className="mt-6 grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
           <section aria-labelledby="download-app">
             <h3 id="download-app" className={TITLE}>Download Our App For Lawyers</h3>
             <div className="rounded-2xl border border-white/10 bg-[#111111] p-4 sm:p-5">

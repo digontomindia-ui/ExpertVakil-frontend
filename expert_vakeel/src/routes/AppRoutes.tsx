@@ -1,7 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Home from "../Home/Home";
-import LogIn from "../Auth/Login/Login";
-import SignUp from "../Auth/Signup/Signup";
+import LoginOTP from "../Auth/LoginOTP";
 import FindProfilePage from "../app/Profile/findprofile";
 import ProfileView from "../app/Profile/profileview";
 import ChatPage from "../app/Chat/chatpage";
@@ -25,8 +24,8 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/login" element={<LogIn />} />
-      <Route path="/signup" element={<SignUp />} />
+      <Route path="/login" element={<LoginOTP />} />
+      <Route path="/signup" element={<LoginOTP />} />
       <Route path="/findprofile" element={<FindProfilePage />} />
       <Route path="/profileview" element={<ProfileView />} />
       <Route path="/chat" element={<ChatPage />} />

@@ -177,9 +177,9 @@ export default function BrowseByCategoryPage({
   }
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:py-12 lg:py-16">
+    <section className="mx-auto w-full max-w-7xl px-4 pt-2 pb-8 sm:py-12 lg:py-16">
       {/* Modern Centered Header */}
-      <div className="mb-10 sm:mb-16 text-center">
+      <div className="mb-6 sm:mb-16 text-center">
         <span className="mb-3 inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-[#FFA800]">
           Diverse Legal Expertise
         </span>

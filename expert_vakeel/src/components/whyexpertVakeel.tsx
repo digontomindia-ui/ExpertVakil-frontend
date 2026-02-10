@@ -41,7 +41,7 @@ const FEATURES: Feature[] = [
 
 export default function WhyExpertVakeel() {
   return (
-    <section className="relative overflow-hidden bg-white py-16 sm:py-24 lg:py-32">
+    <section className="relative overflow-hidden bg-white py-8 sm:py-24 lg:py-32">
       {/* Background Accents */}
       <div className="absolute left-0 top-0 -translate-x-1/2 opacity-20 blur-3xl pointer-events-none">
         <div className="h-96 w-96 rounded-full bg-[#FFA800]/10" />
@@ -49,7 +49,7 @@ export default function WhyExpertVakeel() {
 
       <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
         {/* Flagship Header */}
-        <div className="relative mb-12 flex flex-col items-center text-center sm:mb-20">
+        <div className="relative mb-6 flex flex-col items-center text-center sm:mb-20">
           <div className="mb-4 inline-flex items-center rounded-full bg-gray-900 px-4 py-1.5 shadow-sm">
             <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white">
               The Legal Advantage
@@ -58,8 +58,8 @@ export default function WhyExpertVakeel() {
           <h2 className="text-3xl font-black tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
             Why <span className="text-[#FFA800]">Expert Vakeel</span>
           </h2>
-          <div className="mt-6 h-1 w-24 rounded-full bg-gradient-to-r from-[#FFA800] to-orange-300" />
-          <p className="mt-8 max-w-2xl text-sm font-medium leading-relaxed text-gray-500 sm:text-lg">
+          <div className="mt-2 h-1 w-24 rounded-full bg-gradient-to-r from-[#FFA800] to-orange-300" />
+          <p className="mt-3 max-w-2xl text-sm font-medium leading-relaxed text-gray-500 sm:text-lg">
             We bridge the gap between people and world-class legal assistance through a platform built on transparency, speed, and verification.
           </p>
         </div>
@@ -69,18 +69,18 @@ export default function WhyExpertVakeel() {
           {FEATURES.map((f, idx) => (
             <div
               key={idx}
-              className="group relative flex flex-col rounded-[32px] border border-gray-100 bg-white p-8 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] hover:border-[#FFA800]/20"
+              className="group relative flex flex-col rounded-[32px] border border-gray-100 bg-white p-6 sm:p-8 transition-all duration-500 hover:-translate-y-2 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] hover:border-[#FFA800]/20"
             >
               {/* Icon Box */}
               <div
-                className={`mb-8 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${f.bg} ${f.color}`}
+                className={`mb-4 sm:mb-8 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 ${f.bg} ${f.color}`}
               >
                 {f.icon}
               </div>
 
               {/* Text Content */}
               <div className="flex flex-col">
-                <h3 className="mb-4 text-lg font-bold text-gray-900 sm:text-xl">
+                <h3 className="mb-2 sm:mb-4 text-lg font-bold text-gray-900 sm:text-xl">
                   {f.title}
                 </h3>
                 <p className="text-sm font-medium leading-relaxed text-gray-500">
@@ -95,7 +95,7 @@ export default function WhyExpertVakeel() {
         </div>
 
         {/* Dynamic Trust Stat - Hidden on smallest mobile if needed, but made responsive */}
-        <div className="mt-16 sm:mt-24 rounded-[40px] bg-gray-900 p-8 sm:p-12 lg:p-16 text-center">
+        <div className="mt-4 sm:mt-24 rounded-[32px] sm:rounded-[40px] bg-gray-900 p-6 sm:p-12 lg:p-16 text-center">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
             <div className="flex flex-col gap-2">
               <span className="text-2xl font-black text-white sm:text-4xl">100%</span>

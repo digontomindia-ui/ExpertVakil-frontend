@@ -154,21 +154,14 @@ export default function Header() {
                 Check Challan
               </Link> */}
 
-              {/* Lawyer Signup */}
-              <Link
-                to="/signup"
-                className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
-              >
-                Lawyer Signup
-              </Link>
 
-              {/* Login / Register */}
-              {/* <Link
+
+              <Link
                 to="/login"
                 className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
               >
                 Login / Register
-              </Link> */}
+              </Link>
             </nav>
           </div>
 
@@ -267,14 +260,7 @@ export default function Header() {
               Login / Register
             </Link>
 
-            {/* Lawyer Signup */}
-            <Link
-              to="/signup"
-              onClick={() => setOpen(false)}
-              className="block w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FFA800] transition-colors"
-            >
-              Lawyer Signup
-            </Link>
+
           </nav>
         </div>
       </div>

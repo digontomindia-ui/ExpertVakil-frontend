@@ -109,7 +109,7 @@ export default function TopRatedProfiles() {
       type="button"
       aria-label="Previous"
       onClick={onClick}
-      className="absolute -left-2 sm:-left-4 top-1/2 z-20 -translate-y-1/2 rounded-xl bg-white p-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] transition-all duration-300 hover:bg-[#FFA800] hover:text-white group active:scale-95 border border-gray-100/50"
+      className="absolute -left-2 sm:-left-6 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white p-3 shadow-xl transition-all duration-300 hover:bg-[#FFA800] hover:text-white group active:scale-95 border border-gray-100 flex items-center justify-center"
     >
       <FaChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
     </button>
@@ -120,7 +120,7 @@ export default function TopRatedProfiles() {
       type="button"
       aria-label="Next"
       onClick={onClick}
-      className="absolute -right-2 sm:-right-4 top-1/2 z-20 -translate-y-1/2 rounded-xl bg-white p-3 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] transition-all duration-300 hover:bg-[#FFA800] hover:text-white group active:scale-95 border border-gray-100/50"
+      className="absolute -right-2 sm:-right-6 top-1/2 z-20 -translate-y-1/2 rounded-full bg-white p-3 shadow-xl transition-all duration-300 hover:bg-[#FFA800] hover:text-white group active:scale-95 border border-gray-100 flex items-center justify-center"
     >
       <FaChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
     </button>
@@ -147,7 +147,7 @@ export default function TopRatedProfiles() {
         settings: {
           slidesToShow: 1,
           slidesToScroll: 1,
-          arrows: false,
+          arrows: true,
           centerMode: false,
           centerPadding: '0px',
         }
@@ -169,10 +169,10 @@ export default function TopRatedProfiles() {
   if (!filteredProfiles.length) return null;
 
   return (
-    <section className="relative w-full bg-gradient-to-b from-white to-[#FBFBFB] py-12 sm:py-20 overflow-hidden">
+    <section className="relative w-full bg-gradient-to-b from-white to-[#FBFBFB] py-4 sm:py-20 overflow-hidden">
       <div className="relative mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         {/* Modern Header */}
-        <div className="mb-10 sm:mb-16 text-center">
+        <div className="mb-4 sm:mb-16 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="h-px w-8 bg-[#FFA800]/30" />
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#FFA800]">

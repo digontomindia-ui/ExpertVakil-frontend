@@ -119,7 +119,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
 
   return (
     <div
-      className="group relative h-full flex flex-col rounded-[24px] border border-gray-100 bg-white p-5 sm:p-6 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 hover:border-[#FFA800]/20 cursor-pointer"
+      className="group relative h-full flex flex-col rounded-[24px] border border-gray-100 bg-white p-4 sm:p-6 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 hover:border-[#FFA800]/20 cursor-pointer"
       onClick={handleProfileClick}
       role="button"
       tabIndex={0}
@@ -138,8 +138,8 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
 
       {/* Profile Header */}
       <div className="flex flex-col items-center text-center">
-        <div className="relative mb-4 sm:mb-6">
-          <div className="h-24 w-24 sm:h-28 sm:w-28 overflow-hidden rounded-full ring-4 ring-white shadow-xl transition-transform duration-500 group-hover:scale-105">
+        <div className="relative mb-2 sm:mb-6">
+          <div className="h-16 w-16 sm:h-28 sm:w-28 overflow-hidden rounded-full ring-4 ring-white shadow-xl transition-transform duration-500 group-hover:scale-105">
             <img
               src={avatarUrl || '/assets/default-avatar.png'}
               alt={name}
@@ -182,14 +182,14 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
       </div>
 
       {/* Divider */}
-      <div className="my-5 h-px w-full bg-gradient-to-r from-transparent via-gray-100 to-transparent" />
+      <div className="hidden sm:block my-3 sm:my-5 h-px w-full bg-gradient-to-r from-transparent via-gray-100 to-transparent" />
 
       {/* Profile Metrics */}
-      <div className="flex-grow space-y-4">
+      <div className="flex-grow space-y-2.5 sm:space-y-4">
         {/* Experience */}
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-50 text-[#FFA800]">
-            <FaShieldAlt className="h-4 w-4" />
+        <div className="hidden sm:flex items-center gap-3">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-orange-50 text-[#FFA800]">
+            <FaShieldAlt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Experience</span>
@@ -198,9 +198,9 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
         </div>
 
         {/* Location / Courts */}
-        <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
-            <FaMapMarkerAlt className="h-4 w-4" />
+        <div className="hidden sm:flex items-start gap-3">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+            <FaMapMarkerAlt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Courts</span>
@@ -209,9 +209,9 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
         </div>
 
         {/* Specialization */}
-        <div className="flex items-start gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-500">
-            <FaGavel className="h-4 w-4" />
+        <div className="hidden sm:flex items-start gap-3">
+          <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-500">
+            <FaGavel className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Specialization</span>
@@ -231,7 +231,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
 
         {/* Languages */}
         {languages.length > 0 && (
-          <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-500">
               <FaGlobe className="h-4 w-4" />
             </div>
@@ -244,7 +244,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
 
         {/* Services */}
         {services.length > 0 && (
-          <div className="flex items-start gap-3">
+          <div className="hidden sm:flex items-start gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
               <FaBriefcase className="h-4 w-4" />
             </div>
@@ -280,16 +280,20 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
         )} */}
       </div>
 
-      {/* Footer Badge */}
-      <div className="mt-6 flex items-center justify-between">
-        <span className="inline-flex rounded-lg bg-gray-900 px-3 py-1.5 text-[10px] font-bold text-white uppercase tracking-widest">
+      {/* Profile Actions */}
+      <div className="mt-4 sm:mt-6 flex items-center gap-2 sm:gap-3">
+        <button
+          onClick={handleProfileClick}
+          className="flex-1 rounded-xl bg-[#FFA800] py-2.5 text-[10px] sm:text-xs font-bold text-white shadow-lg shadow-[#FFA800]/20 hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-wide"
+        >
+          View Profile
+        </button>
+        <button
+          onClick={handleProfileClick}
+          className="flex-1 rounded-xl bg-[#0f172a] py-2.5 text-[9px] sm:text-[11px] font-bold text-white uppercase tracking-widest hover:bg-black active:scale-[0.98] transition-all"
+        >
           {pill}
-        </span>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFA800] text-white opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1 shadow-lg shadow-[#FFA800]/30">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
+        </button>
       </div>
     </div>
   );

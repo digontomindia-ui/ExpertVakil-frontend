@@ -380,9 +380,9 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-[100dvh] bg-white pb-safe pt-safe overflow-visible">
+    <div className="bg-white overflow-visible">
       {/* Hero Section */}
-      <section className="relative w-full min-h-[380px] md:min-h-[600px] pb-20 md:pb-8">
+      <section className="relative w-full min-h-[380px] md:min-h-[600px] pb-10 md:pb-8">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
@@ -396,7 +396,7 @@ export default function Home() {
         </div>
 
         {/* Content */}
-        <div className="relative mx-auto max-w-screen-xl px-4 py-8 sm:px-6 md:py-20 lg:py-24">
+        <div className="relative mx-auto max-w-screen-xl px-4 pt-8 pb-4 sm:px-6 md:py-20 lg:py-24">
           <div className="max-w-2xl">
             <h1 className="mb-4 text-3xl font-bold leading-tight text-white md:text-4xl lg:text-5xl xl:text-6xl drop-shadow-lg">
               Find the Right Advocate for Your Legal Issue
@@ -501,8 +501,8 @@ export default function Home() {
       </section>
 
       {/* Navigation Buttons Section */}
-      <section className="sm:mx-auto sm:max-w-screen-xl py-6 sm:py-10 md:py-12">
-        <div className="sm:ml-10 mb-6 sm:mb-8 px-4">
+      <section className="sm:mx-auto sm:max-w-screen-xl py-0 sm:py-10 md:py-12">
+        <div className="sm:ml-10 mb-1 sm:mb-8 px-4">
           <h2 className="text-xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 text-center sm:text-left">
             Explore Our Services
           </h2>
@@ -513,9 +513,7 @@ export default function Home() {
 
         <QuickAccessGrid />
 
-        <div className="hidden md:block">
-          <ServiceList />
-        </div>
+
       </section>
 
       <TopRatedProfiles />
@@ -673,6 +671,6 @@ export default function Home() {
 
       {/* Why Expert Vakeel */}
       <WhyExpertVakeel />
-    </main>
+    </div>
   );
 }

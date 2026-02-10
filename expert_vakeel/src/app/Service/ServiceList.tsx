@@ -111,8 +111,8 @@ export default function ServiceList() {
   }
 
   return (
-    <main>
-      <div className="relative mx-auto mt-2 max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="bg-white py-6 sm:py-10">
+      <div className="mx-auto max-w-screen-xl px-4">
         {filteredServices.length === 0 ? (
           <div className="rounded-3xl bg-white p-12 text-center shadow-xl">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
@@ -144,74 +144,56 @@ export default function ServiceList() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-y-6 gap-x-2 sm:gap-8 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-4 gap-y-12 gap-x-3 sm:gap-x-8 sm:gap-y-16">
             {filteredServices.map((service, index) => {
-              // Get image from service data or fallback to default
               const logoPath = getServiceImage(service, index);
 
               return (
                 <div
                   key={service.id}
                   onClick={() => handleServiceClick(service.id)}
-                  className="
-                    group cursor-pointer
-                    flex flex-col items-center gap-2
-                    sm:flex-row sm:gap-4
-                    transition-all duration-300
-                  "
+                  className="group flex cursor-pointer flex-col items-center text-center transition-all"
                 >
                   {/* ICON BOX */}
                   <div
                     className="
-                      relative
-                      flex h-14 w-14 sm:h-16 sm:w-16
-                      shrink-0 items-center justify-center
-                      rounded-2xl
-                      bg-gray-50
-                      border border-gray-100/50
-                      shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)]
+                      relative mb-4
+                      flex h-16 w-16 items-center justify-center
+                      rounded-3xl bg-[#F4F6F8]
+                      shadow-sm
                       transition-all duration-300
-                      group-hover:translate-y-[-4px]
-                      group-hover:shadow-lg
-                      group-hover:border-[#FFA800]/30
+                      group-hover:translate-y-[-5px]
+                      group-hover:shadow-md
                       group-hover:bg-white
+                      sm:h-24 sm:w-24
                     "
                   >
                     <img
                       src={logoPath}
                       alt={service.name}
-                      className="h-9 w-9 sm:h-10 sm:w-10 object-contain transition-transform duration-500 group-hover:scale-110"
+                      className="h-10 w-10 object-contain transition-transform duration-500 group-hover:scale-110 sm:h-14 sm:w-14"
                       onError={(e) => handleImageError(service.id, e)}
                     />
-
-                    {/* Subtle Brand Accent on Hover */}
-                    <div className="absolute bottom-0 h-0.5 w-0 bg-[#FFA800] transition-all duration-300 group-hover:w-1/2" />
                   </div>
 
                   {/* TITLE */}
-                  <div className="flex flex-col sm:items-start items-center overflow-hidden">
-                    <h3
-                      className="
-                        text-[10.5px] sm:text-lg
-                        font-semibold text-gray-800
-                        leading-[1.2] text-center sm:text-left
-                        line-clamp-2
-                        transition-colors group-hover:text-[#FFA800]
-                      "
-                    >
-                      {service.name}
-                    </h3>
-                    <div className="mt-1 hidden sm:flex items-center gap-1 text-[12px] font-medium text-[#FFA800] opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
-                      Explore <ArrowRight className="h-3 w-3" />
-                    </div>
-                  </div>
+                  <h3
+                    className="
+                      text-[12px] font-bold text-[#444]
+                      leading-[1.3] sm:text-[14px]
+                      max-w-[100px] sm:max-w-[140px]
+                      transition-colors group-hover:text-[#FFA800]
+                    "
+                  >
+                    {service.name}
+                  </h3>
                 </div>
               );
             })}
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
 
