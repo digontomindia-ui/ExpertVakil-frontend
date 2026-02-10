@@ -40,7 +40,7 @@ export default function AppRoutes() {
       <Route path="/my-bookings" element={<MyBookings />} />
       <Route path="/privacypolicy" element={<PrivacyPolicyLegalNetwork />} />
       <Route path="/legal-news" element={<NewsPage />} />
-      {/* <Route path="/challan-status" element={<ChallanStatus />} /> */}
+      <Route path="/challan-status" element={<ChallanStatus />} />
     </Routes>
   );
 }

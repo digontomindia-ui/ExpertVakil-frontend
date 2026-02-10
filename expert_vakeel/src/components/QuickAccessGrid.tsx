@@ -1,10 +1,9 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { serviceAPI, type Service } from "../services/api";
 import { LayoutGrid } from "lucide-react";
 
 export default function QuickAccessGrid() {
-    const navigate = useNavigate();
     const [services, setServices] = useState<Service[]>([]);
 
     useEffect(() => {
@@ -28,7 +27,6 @@ export default function QuickAccessGrid() {
     }, [services]);
 
     const getPath = (item: { label: string, path: string }) => {
-        if (item.label === "Traffic Challan") return "/challan-status";
         if (item.label === "More Services") return "/services";
 
         const service = findService(item.label);
@@ -58,12 +56,13 @@ export default function QuickAccessGrid() {
                 {items.map((item, idx) => {
                     const service = findService(item.label);
                     const iconUrl = service?.image || item.localIcon;
+                    const path = getPath(item);
 
                     return (
-                        <button
+                        <Link
                             key={idx}
-                            onClick={() => navigate(getPath(item))}
-                            className="group flex cursor-pointer flex-col items-center text-center transition-all"
+                            to={path}
+                            className="group flex cursor-pointer flex-col items-center text-center transition-all bg-transparent border-none appearance-none"
                         >
                             {/* ICON BOX */}
                             <div
@@ -87,7 +86,6 @@ export default function QuickAccessGrid() {
                                         alt={item.label}
                                         className="h-10 w-10 sm:h-14 sm:w-14 object-contain transition-transform duration-500 group-hover:scale-110"
                                         onError={(e) => {
-                                            // Final fallback if both API and local icon fail
                                             (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.label)}&background=f3f4f6&color=1e3a8a&font-size=0.33`;
                                         }}
                                     />
@@ -98,7 +96,7 @@ export default function QuickAccessGrid() {
                             <span className="text-[11px] font-bold text-[#4a4a4a] leading-tight sm:text-[14px] max-w-[80px] sm:max-w-none transition-colors group-hover:text-[#FFA800]">
                                 {item.label}
                             </span>
-                        </button>
+                        </Link>
                     );
                 })}
             </div>
