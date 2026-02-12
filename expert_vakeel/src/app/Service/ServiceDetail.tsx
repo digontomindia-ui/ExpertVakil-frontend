@@ -18,7 +18,12 @@ import {
   HelpCircle,
   Star,
   Award,
-  Search as SearchIcon
+  Search as SearchIcon,
+  ShieldCheck,
+  Phone,
+  Car,
+  ArrowRight,
+  ClipboardCheck
 } from "lucide-react";
 
 // Types
@@ -192,6 +197,10 @@ export default function ServiceDetail() {
   // FAQ Accordion state
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
+  // Step state: 1 = Details, 2 = OTP, 3 = Finish
+  const [step, setStep] = useState(1);
+  const [challanSearchStep, setChallanSearchStep] = useState(1);
+
   // Check if service is traffic challan related
   const isTrafficChallanService =
     service?.name?.toLowerCase().includes("traffic") ||
@@ -349,6 +358,7 @@ export default function ServiceDetail() {
       if (response.data.success) {
         setVerificationId(response.data.verificationId);
         setShowOtpInput(true);
+        setStep(2);
         setFormStatus("success");
         setFormMessage("OTP sent to your mobile number");
 
@@ -424,6 +434,7 @@ export default function ServiceDetail() {
       if (response.data.success) {
         setFormStatus("success");
         setFormMessage("Thank you! Our legal expert will contact you shortly.");
+        setStep(3);
 
         // Reset form after success
         setTimeout(() => {
@@ -447,80 +458,87 @@ export default function ServiceDetail() {
 
   // Challan Search - MODIFIED TO HANDLE VERIFICATION
   const handleSearchChallan = async () => {
-    if (!vehicleNumber.trim()) {
-      setChallanError("Please enter vehicle number");
+    if (challanSearchStep === 1) {
+      if (!vehicleNumber.trim()) {
+        setChallanError("Please enter vehicle number");
+        return;
+      }
+      setChallanError(null);
+      setChallanSearchStep(2);
       return;
     }
 
-    // If not verified, handle OTP flow
-    if (!otpVerified) {
+    // Step 2: Handle Contact -> OTP
+    if (challanSearchStep === 2) {
       if (!formMobile || !/^[0-9]{10}$/.test(formMobile)) {
         setChallanError("Please enter a valid 10-digit mobile number");
         return;
       }
 
-      if (!showOtpInput) {
-        // Send OTP
-        setSearchingChallan(true);
-        setChallanError(null);
-        try {
-          const response = await api.post("/api/verify/generate-otp", {
-            name: formName || "User",
-            city: formCity || "Online",
-            phoneNumber: formMobile,
-          });
+      setSearchingChallan(true);
+      setChallanError(null);
+      try {
+        const response = await api.post("/api/verify/generate-otp", {
+          name: formName || "User",
+          city: formCity || "Online",
+          phoneNumber: formMobile,
+        });
 
-          if (response.data.success) {
-            setVerificationId(response.data.verificationId);
-            setShowOtpInput(true);
-            setChallanError(null);
-            if (response.data.testOtp) console.log("🔢 Test OTP:", response.data.testOtp);
-          } else {
-            throw new Error(response.data.message || "Failed to send OTP");
-          }
-        } catch (err: any) {
-          setChallanError(err.response?.data?.message || "Failed to send OTP");
-        } finally {
-          setSearchingChallan(false);
+        if (response.data.success) {
+          setVerificationId(response.data.verificationId);
+          setShowOtpInput(true);
+          setChallanError(null);
+          setChallanSearchStep(3);
+          if (response.data.testOtp) console.log("🔢 Test OTP:", response.data.testOtp);
+        } else {
+          throw new Error(response.data.message || "Failed to send OTP");
         }
-        return;
-      } else {
-        // Verify OTP
-        if (!otp || otp.length < 6) {
-          setChallanError("Please enter 6-digit OTP");
-          return;
-        }
-
-        setSearchingChallan(true);
-        try {
-          const response = await api.post("/api/verify/verify-otp", {
-            verificationId,
-            otp,
-            phoneNumber: formMobile,
-          });
-
-          if (response.data.success) {
-            setOtpVerified(true);
-            setShowOtpInput(false);
-            localStorage.setItem("phone", formMobile);
-            if (response.data.clientId) localStorage.setItem("clientId", response.data.clientId);
-
-            // Proceed to search automatically after verification
-            await executeChallanSearch(formMobile);
-          } else {
-            throw new Error(response.data.message || "Invalid OTP");
-          }
-        } catch (err: any) {
-          setChallanError(err.response?.data?.message || "Invalid OTP");
-        } finally {
-          setSearchingChallan(false);
-        }
-        return;
+      } catch (err: any) {
+        setChallanError(err.response?.data?.message || "Failed to send OTP");
+      } finally {
+        setSearchingChallan(false);
       }
+      return;
     }
 
-    // Already verified, just search
-    await executeChallanSearch(formMobile || localStorage.getItem("phone") || "");
+    // Step 3: Handle OTP -> Results
+    if (challanSearchStep === 3) {
+      if (!otp || otp.length < 6) {
+        setChallanError("Please enter 6-digit OTP");
+        return;
+      }
+
+      setSearchingChallan(true);
+      try {
+        const response = await api.post("/api/verify/verify-otp", {
+          verificationId,
+          otp,
+          phoneNumber: formMobile,
+        });
+
+        if (response.data.success) {
+          setOtpVerified(true);
+          setShowOtpInput(false);
+          localStorage.setItem("phone", formMobile);
+          if (response.data.clientId) localStorage.setItem("clientId", response.data.clientId);
+
+          // Proceed to search automatically after verification
+          await executeChallanSearch(formMobile);
+        } else {
+          throw new Error(response.data.message || "Invalid OTP");
+        }
+      } catch (err: any) {
+        setChallanError(err.response?.data?.message || "Invalid OTP");
+      } finally {
+        setSearchingChallan(false);
+      }
+      return;
+    }
+
+    // Already verified/completed, just search again if needed
+    if (challanSearchStep === 4) {
+      await executeChallanSearch(formMobile || localStorage.getItem("phone") || "");
+    }
   };
 
   // Helper to execute search
@@ -571,6 +589,9 @@ export default function ServiceDetail() {
 
         if (pendingChallans.length === 0) {
           setChallanError(`No pending challans found for ${vehicleNumber.toUpperCase()}`);
+          setChallanSearchStep(1);
+        } else {
+          setChallanSearchStep(4);
         }
       } else {
         throw new Error(challanPayload.message || "No challan data found");
@@ -645,63 +666,135 @@ export default function ServiceDetail() {
 
             {/* Traffic Challan Check (Conditional) */}
             {isTrafficChallanService && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Check Your Challan Status</h2>
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <input
-                      type="text"
-                      value={vehicleNumber}
-                      onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
-                      placeholder="Vehicle Number / DL Number"
-                      className="flex-1 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold text-gray-900 uppercase placeholder:font-normal placeholder:normal-case text-sm"
+              <div className="bg-white rounded-[32px] shadow-2xl shadow-blue-900/10 border border-gray-100 overflow-hidden">
+                {/* Visual Stepper */}
+                <div className="px-8 pt-10 pb-8 bg-gray-50/30 border-b border-gray-100">
+                  <div className="flex items-center justify-between relative max-w-[280px] mx-auto">
+                    <div className="absolute top-[18px] left-0 w-full h-[2px] bg-gray-200 rounded-full" />
+                    <div
+                      className="absolute top-[18px] left-0 h-[2px] bg-[#FFA800] rounded-full transition-all duration-700 ease-out"
+                      style={{ width: `${((challanSearchStep - 1) / 3) * 100}%` }}
                     />
 
-                    {!otpVerified && !showOtpInput && (
-                      <input
-                        type="tel"
-                        value={formMobile}
-                        onChange={(e) => setFormMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                        placeholder="Mobile Number"
-                        maxLength={10}
-                        className="flex-1 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-semibold text-gray-900 text-sm"
-                      />
-                    )}
-
-                    {showOtpInput && (
-                      <input
-                        type="text"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        placeholder="Enter 6-digit OTP"
-                        maxLength={6}
-                        className="flex-1 border border-blue-200 bg-blue-50 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-bold text-blue-900 text-center tracking-widest text-sm"
-                      />
-                    )}
-
-                    <button
-                      onClick={handleSearchChallan}
-                      disabled={searchingChallan}
-                      className="bg-[#1a365d] hover:bg-[#2d4a7c] text-white font-semibold px-6 py-3 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm whitespace-nowrap"
-                    >
-                      {searchingChallan ? <Loader className="w-4 h-4 animate-spin" /> : null}
-                      {otpVerified ? "Check Status" : (showOtpInput ? "Verify & Check" : "Get OTP")}
-                    </button>
+                    {[
+                      { s: 1, label: "Vehicle", icon: Car },
+                      { s: 2, label: "Contact", icon: User },
+                      { s: 3, label: "Verify", icon: ShieldCheck },
+                      { s: 4, label: "Results", icon: ClipboardCheck }
+                    ].map((item) => (
+                      <div key={item.s} className="relative z-10 flex flex-col items-center group">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-500 transform ${challanSearchStep === item.s
+                            ? "bg-[#FFA800] text-white shadow-lg shadow-orange-200 scale-110"
+                            : challanSearchStep > item.s
+                              ? "bg-[#FFA800] text-white"
+                              : "bg-white border-2 border-gray-100 text-gray-300"
+                          }`}>
+                          {challanSearchStep > item.s ? <Check className="w-4 h-4 stroke-[3]" /> : <item.icon className="w-4 h-4" />}
+                        </div>
+                        <span className={`text-[7px] font-black uppercase tracking-widest mt-1.5 transition-colors ${challanSearchStep >= item.s ? "text-[#FFA800]" : "text-gray-300"
+                          }`}>
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-
-                  {showOtpInput && (
-                    <p className="text-[10px] text-blue-600 font-medium ml-1">
-                      OTP sent to {formMobile}. <button onClick={() => setShowOtpInput(false)} className="underline">Change number</button>
-                    </p>
-                  )}
                 </div>
 
-                {challanError && (
-                  <div className="mt-4 p-3 bg-amber-50 text-amber-700 rounded-lg text-sm flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{challanError}</span>
+                <div className="p-8">
+                  <div className="mb-6 text-center">
+                    <h2 className="text-xl font-black text-gray-900 leading-tight">
+                      Check Your <span className="text-[#FFA800]">Challan Status</span>
+                    </h2>
+                    <p className="mt-1 text-xs font-medium text-gray-400">
+                      {challanSearchStep === 1 ? "Start by entering vehicle number" :
+                        challanSearchStep === 2 ? "Provide your contact information" :
+                          challanSearchStep === 3 ? "Verify identity via OTP" : "View your latest records"}
+                    </p>
                   </div>
-                )}
+
+                  <div className="space-y-6">
+                    {challanSearchStep === 1 && (
+                      <div className="space-y-4 animate-in fade-in duration-500">
+                        <div className="relative group">
+                          <Car className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#FFA800] transition-colors" />
+                          <input
+                            type="text"
+                            value={vehicleNumber}
+                            onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+                            placeholder="Vehicle / DL Number"
+                            className="w-full h-14 pl-12 pr-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white transition-all font-bold text-gray-900 uppercase placeholder:normal-case placeholder:font-medium text-sm"
+                            autoFocus
+                          />
+                        </div>
+                        <button
+                          onClick={handleSearchChallan}
+                          className="w-full h-14 bg-[#1a365d] text-white rounded-2xl text-[16px] font-black shadow-xl shadow-blue-900/10 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                          Continue <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    {challanSearchStep === 2 && (
+                      <div className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
+                        <div className="relative group">
+                          <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#FFA800] transition-colors" />
+                          <input
+                            type="tel"
+                            value={formMobile}
+                            onChange={(e) => setFormMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                            placeholder="Mobile Number"
+                            maxLength={10}
+                            className="w-full h-14 pl-12 pr-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white transition-all font-bold text-gray-900 text-sm"
+                          />
+                        </div>
+                        <div className="flex gap-3">
+                          <button onClick={() => setChallanSearchStep(1)} className="w-1/3 h-14 bg-gray-50 text-gray-400 font-bold rounded-2xl text-xs uppercase tracking-widest">Back</button>
+                          <button
+                            onClick={handleSearchChallan}
+                            disabled={searchingChallan}
+                            className="w-2/3 h-14 bg-[#FFA800] text-white rounded-2xl text-[16px] font-black shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                          >
+                            {searchingChallan ? <Loader className="w-5 h-5 animate-spin" /> : "Get OTP"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {challanSearchStep === 3 && (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                        <div className="text-center">
+                          <p className="text-xs font-bold text-gray-500">Sent to +91 {formMobile}</p>
+                        </div>
+                        <input
+                          type="text"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          placeholder="0 0 0 0 0 0"
+                          maxLength={6}
+                          className="w-full h-16 text-center bg-gray-50 border-none rounded-2xl outline-none text-2xl font-black tracking-[0.4em] focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white placeholder:tracking-normal placeholder:text-gray-200"
+                        />
+                        <div className="space-y-3">
+                          <button
+                            onClick={handleSearchChallan}
+                            disabled={searchingChallan || otp.length < 6}
+                            className="w-full h-14 bg-gray-900 text-white rounded-2xl text-[16px] font-black shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                          >
+                            {searchingChallan ? <Loader className="w-5 h-5 animate-spin" /> : "Verify & Check"}
+                          </button>
+                          <button onClick={() => setChallanSearchStep(2)} className="w-full text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900">Change Number</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {challanError && (
+                    <div className="mt-6 p-4 bg-red-50 text-red-700 border border-red-100 rounded-2xl text-[11px] font-bold flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>{challanError}</span>
+                    </div>
+                  )}
+                </div>
 
                 {/* Challan Results */}
                 {challanData && challanData.pendingChallans.length > 0 && (
@@ -766,193 +859,214 @@ export default function ServiceDetail() {
 
           {/* Form Card - Strategic Priority (order-2 for mobile to show after challan) */}
           <div className="w-full lg:w-2/5 order-2 lg:order-2">
-            <div id="lead-form" className={`bg-white rounded-xl shadow-lg border-2 ${formStatus === "success" ? "border-green-500" : "border-[#1a365d]/10"} overflow-hidden sticky top-24`}>
-              <div className="bg-[#1a365d] p-4 text-white text-center">
-                <h3 className="font-bold">Book Your Professional Assistance</h3>
-                <p className="text-xs text-blue-100 mt-1">Fill details to get verified legal support</p>
+
+            {/* Visual Stepper for Lead Form */}
+            <div className="mb-6 px-2">
+              <div className="flex items-center justify-between relative max-w-[280px] mx-auto">
+                {/* Connector Background */}
+                <div className="absolute top-4 left-0 w-full h-[2px] bg-gray-200 rounded-full" />
+                {/* Connector Active */}
+                <div
+                  className="absolute top-4 left-0 h-[2px] bg-[#FFA800] rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${((step - 1) / 2) * 100}%` }}
+                />
+
+                {[
+                  { s: 1, label: "Details", icon: User },
+                  { s: 2, label: "Verify", icon: ShieldCheck },
+                  { s: 3, label: "Finish", icon: CheckCircle2 }
+                ].map((item) => (
+                  <div key={item.s} className="relative z-10 flex flex-col items-center group">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 transform ${step === item.s
+                      ? "bg-[#FFA800] text-white shadow-lg shadow-orange-200 scale-110"
+                      : step > item.s
+                        ? "bg-[#FFA800] text-white"
+                        : "bg-white border-2 border-gray-100 text-gray-300"
+                      }`}>
+                      {step > item.s ? <Check className="w-4 h-4 stroke-[3]" /> : <item.icon className="w-4 h-4" />}
+                    </div>
+                    <span className={`text-[7px] font-black uppercase tracking-widest mt-1.5 transition-colors ${step >= item.s ? "text-[#FFA800]" : "text-gray-300"
+                      }`}>
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div id="lead-form" className={`bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-24 transition-all duration-500 ${formStatus === "success" && step === 3 ? "scale-105 shadow-green-100 border-green-200" : ""}`}>
+              <div className="bg-[#1a365d] p-5 text-white text-center">
+                <h3 className="font-bold text-lg">
+                  {step === 1 ? "Book Professional Help" : step === 2 ? "Verify Identity" : "Success!"}
+                </h3>
+                <p className="text-xs text-blue-100/80 mt-1">
+                  {step === 1 ? "Fill details to get verified legal support" : step === 2 ? "Enter the 6-digit code sent to you" : "Your request is being processed"}
+                </p>
               </div>
 
-              <div className="p-5 space-y-4">
-                {formStatus && (
-                  <div className={`p-3 rounded-lg text-sm font-medium ${formStatus === "success"
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                    }`}>
+              <div className="p-6 space-y-5">
+                {step < 3 && formStatus === "error" && formMessage && (
+                  <div className="p-3 bg-red-50 text-red-700 border border-red-100 rounded-xl text-xs font-semibold flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
                     {formMessage}
                   </div>
                 )}
 
-                {/* Name Input */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase ml-1">Full Name</label>
-                  <input
-                    type="text"
-                    value={formName}
-                    onChange={(e) => setFormName(e.target.value)}
-                    placeholder="Enter your name"
-                    disabled={showOtpInput || otpVerified}
-                    className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 placeholder:text-gray-400 disabled:bg-gray-50 transition-all"
-                  />
-                </div>
-
-                {/* Mobile Number + OTP Button */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase ml-1">Mobile Number *</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="tel"
-                      value={formMobile}
-                      onChange={(e) => setFormMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                      placeholder="10-digit mobile number"
-                      maxLength={10}
-                      disabled={showOtpInput || otpVerified}
-                      className="flex-1 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 placeholder:text-gray-400 disabled:bg-gray-50 transition-all"
-                    />
-                    {otpVerified && (
-                      <div className="flex items-center px-3 bg-green-50 rounded-lg">
-                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                {/* Step 1: Input Details */}
+                {step === 1 && (
+                  <div className="space-y-4 animate-in fade-in duration-500">
+                    {/* Name Input */}
+                    <div className="space-y-1.5 group">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FFA800] transition-colors" />
+                        <input
+                          type="text"
+                          value={formName}
+                          onChange={(e) => setFormName(e.target.value)}
+                          placeholder="Enter your name"
+                          className="w-full bg-gray-50 border-none rounded-2xl px-11 py-3.5 outline-none focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white transition-all text-sm font-bold text-gray-800"
+                        />
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* City Dropdown - Searchable */}
-                <div ref={cityDropdownRef} className="relative space-y-1">
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase ml-1">City *</label>
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-                      disabled={showOtpInput || otpVerified}
-                      className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 bg-white disabled:bg-gray-50 transition-all text-left flex items-center justify-between"
-                    >
-                      <span className={formCity ? "text-gray-900 font-medium" : "text-gray-400"}>
-                        {formCity || "Search and select city"}
-                      </span>
-                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${cityDropdownOpen ? "rotate-180" : ""}`} />
-                    </button>
+                    {/* Mobile Number */}
+                    <div className="space-y-1.5 group">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Mobile Number *</label>
+                      <div className="relative">
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FFA800] transition-colors" />
+                        <input
+                          type="tel"
+                          value={formMobile}
+                          onChange={(e) => setFormMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                          placeholder="10-digit mobile number"
+                          maxLength={10}
+                          className="w-full bg-gray-50 border-none rounded-2xl px-11 py-3.5 outline-none focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white transition-all text-sm font-bold text-gray-800"
+                        />
+                      </div>
+                    </div>
 
-                    {cityDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-                        {/* Search Input */}
-                        <div className="p-3 border-b border-gray-100">
-                          <div className="relative flex items-center">
-                            <SearchIcon className="w-4 h-4 text-gray-400 absolute left-3" />
-                            <input
-                              type="text"
-                              value={citySearch}
-                              onChange={(e) => setCitySearch(e.target.value)}
-                              placeholder="Search City"
-                              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                              autoFocus
-                            />
+                    {/* City Dropdown */}
+                    <div ref={cityDropdownRef} className="relative space-y-1.5 group">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">City *</label>
+                      <button
+                        type="button"
+                        onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
+                        className="w-full bg-gray-50 border-none rounded-2xl px-11 py-3.5 outline-none focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white transition-all text-sm font-bold text-gray-800 text-left flex items-center justify-between group"
+                      >
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FFA800]" />
+                        <span className={formCity ? "text-gray-900" : "text-gray-400 font-medium"}>
+                          {formCity || "Select City"}
+                        </span>
+                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${cityDropdownOpen ? "rotate-180" : ""}`} />
+                      </button>
+
+                      {cityDropdownOpen && (
+                        <div className="absolute z-50 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                          <div className="p-3 border-b border-gray-50">
+                            <div className="relative">
+                              <SearchIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="text"
+                                value={citySearch}
+                                onChange={(e) => setCitySearch(e.target.value)}
+                                placeholder="Search City"
+                                className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border-none rounded-xl outline-none focus:ring-2 focus:ring-[#FFA800]/20"
+                                autoFocus
+                              />
+                            </div>
                           </div>
-                        </div>
-
-                        {/* City List */}
-                        <div className="max-h-64 overflow-y-auto">
-                          {filteredCities.length > 0 ? (
-                            filteredCities.map((city) => (
+                          <div className="max-h-52 overflow-y-auto">
+                            {filteredCities.map((city) => (
                               <button
                                 key={city}
                                 type="button"
-                                onClick={() => {
-                                  setFormCity(city);
-                                  setCityDropdownOpen(false);
-                                  setCitySearch("");
-                                }}
-                                className={`w-full text-left px-4 py-3 text-sm font-medium transition-colors ${formCity === city
-                                  ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600"
-                                  : "text-gray-700 hover:bg-gray-50"
-                                  }`}
+                                onClick={() => { setFormCity(city); setCityDropdownOpen(false); setCitySearch(""); }}
+                                className={`w-full text-left px-5 py-3 text-sm font-bold transition-all ${formCity === city ? "bg-orange-50 text-[#FFA800]" : "text-gray-600 hover:bg-gray-50 hover:pl-6"}`}
                               >
-                                <div className="flex items-center justify-between">
-                                  <span>{city}</span>
-                                  {formCity === city && <Check className="w-4 h-4" />}
-                                </div>
+                                {city}
                               </button>
-                            ))
-                          ) : (
-                            <div className="px-4 py-6 text-center text-sm text-gray-500">
-                              No cities found
-                            </div>
-                          )}
+                            ))}
+                          </div>
                         </div>
+                      )}
+                    </div>
+
+                    {/* Problem Description */}
+                    <div className="space-y-1.5 group">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Description (optional)</label>
+                      <div className="relative">
+                        <FileText className="absolute left-4 top-4 w-4 h-4 text-gray-400 group-focus-within:text-[#FFA800] transition-colors" />
+                        <textarea
+                          value={formDescription}
+                          onChange={(e) => setFormDescription(e.target.value.slice(0, 300))}
+                          placeholder="Describe your issue..."
+                          className="w-full bg-gray-50 border-none rounded-2xl px-11 py-3.5 outline-none focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white transition-all text-sm font-bold text-gray-800 h-24 resize-none"
+                        />
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Legal Category (Auto-filled) */}
-                <div className="space-y-1">
-                  <label className="block text-[11px] font-bold text-gray-400 uppercase ml-1">Legal Category</label>
-                  <input
-                    type="text"
-                    value={service.name}
-                    disabled
-                    className="w-full border border-gray-100 rounded-lg px-4 py-3 text-sm text-gray-500 bg-gray-50 font-medium"
-                  />
-                </div>
-
-                {/* Short Problem Description */}
-                {!showOtpInput && !otpVerified && (
-                  <div className="space-y-1">
-                    <label className="block text-[11px] font-bold text-gray-400 uppercase ml-1">Short Problem Description (optional)</label>
-                    <textarea
-                      value={formDescription}
-                      onChange={(e) => setFormDescription(e.target.value.slice(0, 300))}
-                      placeholder="Briefly describe your legal issue (optional)"
-                      maxLength={300}
-                      className="w-full border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 placeholder:text-gray-400 resize-none h-20 transition-all"
-                    />
-                    <p className="text-[10px] text-gray-400 text-right mt-0.5">{formDescription.length}/300 characters</p>
+                    <button
+                      onClick={handleSendOtp}
+                      disabled={sendingOtp || formSubmitting}
+                      className="w-full bg-[#c53030] hover:bg-[#a12525] text-white font-black py-4 rounded-2xl shadow-xl shadow-red-900/10 transition-all active:scale-[0.98] disabled:opacity-50 text-sm uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                      {sendingOtp ? <Loader className="w-5 h-5 animate-spin" /> : <>{getCtaText(service.name)} <ChevronRight className="w-4 h-4" /></>}
+                    </button>
                   </div>
                 )}
 
-                {/* OTP Input */}
-                {showOtpInput && !otpVerified && (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
-                      Enter the OTP sent to {formMobile}
+                {/* Step 2: OTP Verification */}
+                {step === 2 && (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+                    <div className="text-center">
+                      <p className="text-sm font-bold text-gray-600">Enter the 6-digit OTP sent to</p>
+                      <p className="text-sm font-black text-gray-900 mt-0.5">+91 {formMobile}</p>
                     </div>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        placeholder="Enter 6-digit OTP"
-                        maxLength={6}
-                        className="flex-1 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900 text-center tracking-widest font-semibold"
-                      />
-                    </div>
-                    <div className="flex gap-2">
+
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="0 0 0 0 0 0"
+                      maxLength={6}
+                      className="w-full h-16 text-center bg-gray-50 border-none rounded-2xl outline-none text-2xl font-black tracking-[0.4em] focus:ring-4 focus:ring-[#FFA800]/5 focus:bg-white placeholder:tracking-normal placeholder:text-gray-200"
+                    />
+
+                    <div className="space-y-3">
                       <button
                         onClick={handleVerifyOtp}
                         disabled={verifyingOtp || otp.length < 6}
-                        className="flex-1 bg-[#c53030] hover:bg-[#9b2c2c] text-white font-bold py-3 rounded-lg transition-all disabled:opacity-60"
+                        className="w-full bg-[#1a365d] text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-900/10 transition-all active:scale-[0.98] disabled:opacity-50 text-sm uppercase tracking-widest"
                       >
-                        {verifyingOtp ? "Verifying..." : "Verify OTP"}
+                        {verifyingOtp ? <Loader className="w-5 h-5 animate-spin mx-auto" /> : "Verify Identity"}
                       </button>
-                      <button
-                        onClick={handleSendOtp}
-                        disabled={sendingOtp}
-                        className="px-4 py-3 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
-                      >
-                        Resend
-                      </button>
+                      <div className="flex justify-between items-center px-2">
+                        <button onClick={() => setStep(1)} className="text-[10px] font-bold text-gray-400 hover:text-gray-800 uppercase tracking-wider">Change Details</button>
+                        <button onClick={handleSendOtp} className="text-[10px] font-bold text-gray-400 hover:text-gray-800 uppercase tracking-wider">Resend OTP</button>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Submit Button (Send OTP) */}
-                {!showOtpInput && !otpVerified && (
-                  <button
-                    onClick={handleSendOtp}
-                    disabled={sendingOtp || formSubmitting}
-                    className="w-full bg-[#c53030] hover:bg-[#9b2c2c] text-white font-bold py-3.5 rounded-lg shadow-lg transition-all hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed text-sm uppercase tracking-wide"
-                  >
-                    {sendingOtp ? "Sending OTP..." : getCtaText(service.name)}
-                  </button>
+                {/* Step 3: Success */}
+                {step === 3 && (
+                  <div className="py-8 text-center animate-in zoom-in duration-500">
+                    <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle2 className="w-10 h-10 text-green-500" />
+                    </div>
+                    <h4 className="text-xl font-black text-gray-900 mb-2">Request Received!</h4>
+                    <p className="text-sm font-medium text-gray-500 px-4 leading-relaxed">
+                      Thank you, <span className="text-gray-900 font-bold">{formName}</span>.
+                      Our legal expert for <span className="text-gray-900 font-bold">{service.name}</span> will contact you shortly on <span className="text-gray-900 font-bold">{formMobile}</span>.
+                    </p>
+                    <button
+                      onClick={() => setStep(1)}
+                      className="mt-8 text-xs font-black text-[#FFA800] uppercase tracking-widest hover:underline"
+                    >
+                      Book Another Service
+                    </button>
+                  </div>
                 )}
 
                 {/* Trust Note */}

@@ -14,7 +14,10 @@ import {
     Car,
     Phone,
     User,
-    ShieldCheck
+    ShieldCheck,
+    ClipboardCheck,
+    FileText,
+    ArrowRight
 } from "lucide-react";
 
 // Types from ServiceDetail
@@ -67,7 +70,7 @@ const CITY_OPTIONS = [
 export default function ChallanStatus() {
     const navigate = useNavigate();
 
-    // Step state: 1 = Input Details, 2 = OTP, 3 = Results
+    // Step state: 1 = Vehicle, 2 = Contact, 3 = OTP, 4 = Results
     const [step, setStep] = useState(1);
 
     // Data State
@@ -124,11 +127,22 @@ export default function ChallanStatus() {
         !citySearch.trim() || new RegExp(citySearch.trim(), "i").test(c)
     );
 
-    // Generate OTP
+    // Proceed to Step 2
+    const handleNextToContact = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!vehicleNumber) {
+            setError("Please enter vehicle number");
+            return;
+        }
+        setError(null);
+        setStep(2);
+    };
+
+    // Generate OTP (Step 2 -> 3)
     const handleInitiateCheck = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!vehicleNumber || !name || !phone || !city) {
-            setError("Please fill all fields");
+        if (!name || !phone || !city) {
+            setError("Please fill all contact fields");
             return;
         }
         if (!/^[0-9]{10}$/.test(phone)) {
@@ -148,7 +162,7 @@ export default function ChallanStatus() {
 
             if (response.data.success) {
                 setVerificationId(response.data.verificationId);
-                setStep(2);
+                setStep(3);
                 if (response.data.testOtp) {
                     console.log("🔢 Test OTP:", response.data.testOtp);
                 }
@@ -233,7 +247,7 @@ export default function ChallanStatus() {
                     servicesBooked: ["Traffic Challan Assistance"],
                 });
 
-                setStep(3);
+                setStep(4);
             } else {
                 throw new Error(challanPayload.message || "No challan data found");
             }
@@ -247,40 +261,75 @@ export default function ChallanStatus() {
     return (
         <div className="min-h-screen bg-[#F8FAFC]">
             {/* Hero Header */}
-            <div className="bg-[#1a365d] pt-16 pb-32 px-4">
+            <div className="bg-[#1a365d] pt-16 pb-40 px-4">
                 <div className="max-w-4xl mx-auto text-center">
                     <button
                         onClick={() => navigate("/")}
-                        className="inline-flex items-center gap-2 text-blue-200 hover:text-white mb-6 transition-colors"
+                        className="inline-flex items-center gap-2 text-blue-200 hover:text-white mb-8 transition-colors"
                     >
                         <ArrowLeft className="w-4 h-4" /> Back to Home
                     </button>
-                    <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-4">
-                        Check Your Traffic Challan
-                    </h1>
-                    <p className="text-blue-100 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-                        Get instant updates on pending vehicle challans and professional legal assistance to resolve them.
-                    </p>
+
+                    {/* Stepper Header Based on Reference Image */}
+                    <div className="mb-2 text-center">
+                        <h2 className="text-sm font-black text-white/40 uppercase tracking-[0.4em] mb-10">
+                            Check Your <span className="text-white">Challan Status</span>
+                        </h2>
+
+                        <div className="flex items-center justify-between relative max-w-sm mx-auto">
+                            {/* Connector Background */}
+                            <div className="absolute top-5 left-0 w-full h-[2px] bg-white/10 rounded-full" />
+                            {/* Connector Active */}
+                            <div
+                                className="absolute top-5 left-0 h-[2px] bg-[#FFA800] rounded-full transition-all duration-700 ease-out"
+                                style={{ width: `${((step - 1) / 3) * 100}%` }}
+                            />
+
+                            {[
+                                { s: 1, label: "Vehicle", icon: Car },
+                                { s: 2, label: "Details", icon: User },
+                                { s: 3, label: "Verify", icon: ShieldCheck },
+                                { s: 4, label: "Results", icon: ClipboardCheck }
+                            ].map((item) => (
+                                <div key={item.s} className="relative z-10 flex flex-col items-center group">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 transform ${step === item.s
+                                        ? "bg-[#FFA800] text-white shadow-[0_0_20px_rgba(255,168,0,0.4)] scale-110"
+                                        : step > item.s
+                                            ? "bg-[#FFA800] text-white"
+                                            : "bg-[#1a365d] border-2 border-white/20 text-white/40"
+                                        }`}>
+                                        {step > item.s ? <Check className="w-5 h-5 stroke-[3]" /> : <item.icon className="w-4 h-4" />}
+                                    </div>
+                                    <div className="absolute -bottom-7 w-20 text-center">
+                                        <span className={`text-[8px] font-black uppercase tracking-widest block transition-colors ${step >= item.s ? "text-[#FFA800]" : "text-white/20"
+                                            }`}>
+                                            {item.label}
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div className="max-w-xl mx-auto -mt-20 px-4 pb-20">
-                <div className="bg-white rounded-[32px] shadow-2xl shadow-blue-900/10 border border-gray-100 overflow-hidden">
+            <div className="max-w-xl mx-auto -mt-24 px-4 pb-20 relative z-20">
+                <div className="bg-white rounded-[40px] shadow-2xl shadow-blue-900/40 border border-white/10 overflow-hidden">
 
-                    {/* Progress Indicator */}
-                    <div className="flex border-b border-gray-50">
-                        {[1, 2, 3].map((s) => (
-                            <div
-                                key={s}
-                                className={`flex-1 py-4 text-center text-xs font-bold uppercase tracking-widest ${step === s ? "text-blue-600 bg-blue-50/50" : "text-gray-300"
-                                    } transition-colors duration-500`}
-                            >
-                                Step 0{s}
-                            </div>
-                        ))}
-                    </div>
+
 
                     <div className="p-8 md:p-10">
+                        {step <= 2 && (
+                            <div className="mb-8 text-center">
+                                <h1 className="text-2xl font-black text-gray-900 leading-tight">
+                                    Please Fill Details
+                                </h1>
+                                <p className="mt-2 text-sm font-medium text-gray-400">
+                                    {step === 1 ? "Start by entering vehicle number" : "Provide contact information"}
+                                </p>
+                            </div>
+                        )}
+
                         {error && (
                             <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 text-red-700 text-sm animate-in fade-in slide-in-from-top-2">
                                 <AlertCircle className="w-5 h-5 shrink-0" />
@@ -289,60 +338,70 @@ export default function ChallanStatus() {
                         )}
 
                         {step === 1 && (
-                            <form onSubmit={handleInitiateCheck} className="space-y-6 animate-in fade-in duration-500">
+                            <form onSubmit={handleNextToContact} className="space-y-6 animate-in fade-in duration-500">
                                 <div className="space-y-4">
                                     <div className="relative group">
-                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">Vehicle Number</label>
-                                        <div className="relative">
-                                            <Car className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                                            <input
-                                                type="text"
-                                                placeholder="e.g. CH01 AB 1234"
-                                                value={vehicleNumber}
-                                                onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
-                                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold text-gray-900 uppercase placeholder:normal-case placeholder:font-medium"
-                                            />
+                                        <div className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#FFA800] transition-colors">
+                                            <Car strokeWidth={2.5} />
                                         </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Vehicle / DL Number"
+                                            value={vehicleNumber}
+                                            onChange={(e) => setVehicleNumber(e.target.value.toUpperCase())}
+                                            className="w-full h-16 pl-14 pr-4 bg-[#F6F6F6] rounded-[24px] outline-none text-[16px] font-bold text-gray-800 transition-all border border-transparent focus:border-[#FFA800]/30 focus:bg-white focus:ring-4 focus:ring-[#FFA800]/5 uppercase placeholder:normal-case placeholder:font-medium"
+                                            autoFocus
+                                        />
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="w-full h-16 bg-[#1a365d] text-white rounded-[24px] text-[18px] font-black shadow-xl shadow-blue-900/10 transition-all active:scale-[0.98] flex items-center justify-center gap-3"
+                                >
+                                    Continue <ArrowRight className="w-5 h-5" />
+                                </button>
+                            </form>
+                        )}
+
+                        {step === 2 && (
+                            <form onSubmit={handleInitiateCheck} className="space-y-4 animate-in fade-in slide-in-from-right-8 duration-500">
+                                <div className="space-y-4">
+                                    <div className="relative group">
+                                        <div className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#FFA800] transition-colors">
+                                            <User strokeWidth={2.5} />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Full Name"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            className="w-full h-16 pl-14 pr-4 bg-[#F6F6F6] rounded-[24px] outline-none text-[16px] font-bold text-gray-800 transition-all border border-transparent focus:border-[#FFA800]/30 focus:bg-white focus:ring-4 focus:ring-[#FFA800]/5"
+                                        />
                                     </div>
 
                                     <div className="relative group">
-                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">Full Name</label>
-                                        <div className="relative">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                                            <input
-                                                type="text"
-                                                placeholder="Enter your name"
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value)}
-                                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-gray-900"
-                                            />
+                                        <div className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#FFA800] transition-colors">
+                                            <Phone strokeWidth={2.5} />
                                         </div>
-                                    </div>
-
-                                    <div className="relative group">
-                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">Mobile Number</label>
-                                        <div className="relative">
-                                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
-                                            <input
-                                                type="tel"
-                                                placeholder="10-digit mobile number"
-                                                value={phone}
-                                                onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                                                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-gray-900"
-                                            />
-                                        </div>
+                                        <input
+                                            type="tel"
+                                            placeholder="Mobile Number"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                                            className="w-full h-16 pl-14 pr-4 bg-[#F6F6F6] rounded-[24px] outline-none text-[16px] font-bold text-gray-800 transition-all border border-transparent focus:border-[#FFA800]/30 focus:bg-white focus:ring-4 focus:ring-[#FFA800]/5"
+                                        />
                                     </div>
 
                                     <div className="relative" ref={cityDropdownRef}>
-                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 block ml-1">City</label>
                                         <button
                                             type="button"
                                             onClick={() => setCityDropdownOpen(!cityDropdownOpen)}
-                                            className="w-full pl-4 pr-10 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-left flex items-center justify-between outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all"
+                                            className="w-full h-16 pl-5 pr-12 bg-[#F6F6F6] rounded-[24px] text-left flex items-center justify-between outline-none transition-all border border-transparent focus:border-[#FFA800]/30 focus:bg-white focus:ring-4 focus:ring-[#FFA800]/5"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <MapPin className="w-5 h-5 text-gray-400" />
-                                                <span className={`font-semibold ${city ? "text-gray-900" : "text-gray-400"}`}>
+                                                <MapPin className="w-5 h-5 text-gray-400" strokeWidth={2.5} />
+                                                <span className={`text-[16px] font-bold ${city ? "text-gray-800" : "text-gray-400"}`}>
                                                     {city || "Select City"}
                                                 </span>
                                             </div>
@@ -350,7 +409,7 @@ export default function ChallanStatus() {
                                         </button>
 
                                         {cityDropdownOpen && (
-                                            <div className="absolute z-20 w-full mt-2 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                            <div className="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-[24px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                                 <div className="p-3 border-b border-gray-50">
                                                     <div className="relative">
                                                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -359,18 +418,18 @@ export default function ChallanStatus() {
                                                             placeholder="Search city..."
                                                             value={citySearch}
                                                             onChange={(e) => setCitySearch(e.target.value)}
-                                                            className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-xl text-sm border-none outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                            className="w-full pl-9 pr-4 py-2 bg-gray-50 rounded-[14px] text-sm border-none outline-none focus:ring-2 focus:ring-[#FFA800]/20"
                                                             autoFocus
                                                         />
                                                     </div>
                                                 </div>
-                                                <div className="max-h-60 overflow-y-auto">
+                                                <div className="max-h-52 overflow-y-auto">
                                                     {filteredCities.map(c => (
                                                         <button
                                                             key={c}
                                                             type="button"
                                                             onClick={() => { setCity(c); setCityDropdownOpen(false); }}
-                                                            className={`w-full px-5 py-3 text-left text-sm font-semibold transition-colors hover:bg-blue-50 ${city === c ? "text-blue-600 bg-blue-50/50" : "text-gray-700"}`}
+                                                            className={`w-full px-5 py-3 text-left text-sm font-bold transition-colors hover:bg-orange-50 ${city === c ? "text-[#FFA800] bg-orange-50/50" : "text-gray-700"}`}
                                                         >
                                                             {c}
                                                         </button>
@@ -381,17 +440,26 @@ export default function ChallanStatus() {
                                     </div>
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-4 bg-[#FFA800] hover:bg-orange-500 text-white rounded-2xl text-xl font-extrabold shadow-xl shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
-                                >
-                                    {loading ? <Loader className="w-6 h-6 animate-spin" /> : "Check Challan Status"}
-                                </button>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep(1)}
+                                        className="w-1/3 h-16 bg-gray-100 text-gray-500 rounded-[24px] font-black text-sm uppercase tracking-widest transition-all"
+                                    >
+                                        Back
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-2/3 h-16 bg-[#FFA800] text-white rounded-[24px] text-[18px] font-black shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+                                    >
+                                        {loading ? <Loader className="w-6 h-6 animate-spin" /> : "Get OTP"}
+                                    </button>
+                                </div>
                             </form>
                         )}
 
-                        {step === 2 && (
+                        {step === 3 && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
                                 <div className="text-center">
                                     <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-50 rounded-full mb-6 text-blue-600">
@@ -403,7 +471,7 @@ export default function ChallanStatus() {
                                     </p>
                                 </div>
 
-                                <div className="space-y-6">
+                                <div className="space-y-8">
                                     <div className="flex justify-center gap-2">
                                         <input
                                             type="text"
@@ -411,31 +479,31 @@ export default function ChallanStatus() {
                                             value={otp}
                                             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                                             placeholder="0 0 0 0 0 0"
-                                            className="w-full text-center py-5 bg-gray-50 border border-gray-200 rounded-2xl text-3xl font-black tracking-[1em] outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:tracking-normal placeholder:text-gray-300"
+                                            className="w-full h-20 text-center bg-[#F6F6F6] rounded-[24px] outline-none text-[32px] font-black tracking-[0.4em] transition-all border border-transparent focus:border-[#FFA800]/30 focus:bg-white placeholder:tracking-normal placeholder:text-gray-200"
                                         />
                                     </div>
 
                                     <button
                                         onClick={handleVerifyAndFetch}
-                                        disabled={loading}
-                                        className="w-full py-4 bg-[#1a365d] hover:bg-[#2d4a7c] text-white rounded-2xl text-xl font-extrabold shadow-xl shadow-blue-900/10 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+                                        disabled={loading || otp.length < 6}
+                                        className="w-full h-16 bg-gray-900 text-white rounded-[24px] text-[18px] font-black shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
                                     >
-                                        {loading ? <Loader className="w-6 h-6 animate-spin" /> : "Verify & Fetch Results"}
+                                        {loading ? <Loader className="w-6 h-6 animate-spin" /> : "Verify Identity"}
                                     </button>
 
                                     <div className="text-center">
                                         <button
-                                            onClick={() => setStep(1)}
-                                            className="text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors"
+                                            onClick={() => setStep(2)}
+                                            className="text-xs font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 flex items-center justify-center gap-2 mx-auto"
                                         >
-                                            Change Mobile Number
+                                            <ArrowLeft className="w-3.5 h-3.5" /> Back to details
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         )}
 
-                        {step === 3 && challanData && (
+                        {step === 4 && challanData && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <div className="bg-gradient-to-br from-[#1a365d] to-[#0f172a] rounded-3xl p-8 text-white shadow-2xl shadow-blue-900/20">
                                     <div className="flex justify-between items-start mb-6">
