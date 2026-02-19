@@ -15,6 +15,55 @@
 
 <body>
   <div id="root"></div>
+
+  <!-- MSG91 OTP Widget -->
+  <script type="text/javascript">
+    var configuration = {
+      widgetId: "366273683645393536383436",
+      tokenAuth: "433175TFzWj1SwdI6996d0f3P1",
+      exposeMethods: true,
+      success: function (data) {
+        // data.message contains the JWT access-token for server-side validation
+        console.log("MSG91 OTP verified, access-token:", data);
+        if (window.__msg91SuccessHandler) {
+          window.__msg91SuccessHandler(data);
+        }
+      },
+      failure: function (error) {
+        console.error("MSG91 OTP failure:", error);
+        if (window.__msg91FailureHandler) {
+          window.__msg91FailureHandler(error);
+        }
+      }
+    };
+  </script>
+  <script type="text/javascript">
+    (function loadOtpScript(urls) {
+      let i = 0;
+      function attempt() {
+        const s = document.createElement('script');
+        s.src = urls[i];
+        s.async = true;
+        s.onload = () => {
+          if (typeof window.initSendOTP === 'function') {
+            window.initSendOTP(configuration);
+          }
+        };
+        s.onerror = () => {
+          i++;
+          if (i < urls.length) {
+            attempt();
+          }
+        };
+        document.head.appendChild(s);
+      }
+      attempt();
+    })([
+      'https://verify.msg91.com/otp-provider.js',
+      'https://verify.phone91.com/otp-provider.js'
+    ]);
+  </script>
+
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

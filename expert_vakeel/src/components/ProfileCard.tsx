@@ -8,6 +8,14 @@ import {
   FaBriefcase,
   FaGavel,
 } from "react-icons/fa";
+import {
+  X, User, Phone, MapPin, ChevronDown, Search, ShieldCheck,
+  RotateCcw, ArrowLeft, Loader, ArrowRight
+} from "lucide-react";
+import api, { publicUserAPI } from "../services/api";
+import { useEffect, useRef } from "react";
+import { signInWithCustomToken } from "firebase/auth";
+import { auth } from "../lib/firebase";
 
 export type Profile = {
   id: string;
@@ -49,6 +57,49 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
   const [showFullSpecialty, setShowFullSpecialty] = useState(false);
   const [showFullServices, setShowFullServices] = useState(false);
 
+  // Auth/OTP Modal State
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authStep, setAuthStep] = useState(1);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formCity, setFormCity] = useState("");
+  const [otp, setOtp] = useState("");
+  const [resending, setResending] = useState(false);
+  const [cities, setCities] = useState<string[]>(["New Delhi", "Mumbai", "Pune", "Noida", "Gurugram", "Chennai", "Kolkata", "Chandigarh", "Bengaluru", "Hyderabad"]);
+  const [citySearch, setCitySearch] = useState("");
+  const [cityDropdownOpen, setCityDropdownOpen] = useState(false);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showAuthModal) return;
+    const fetchCities = async () => {
+      try {
+        const resp = await publicUserAPI.getAll({ limit: "100" }).catch(() => null);
+        if (resp?.data?.data && Array.isArray(resp.data.data)) {
+          const citiesSet = new Set<string>();
+          resp.data.data.forEach((u: any) => u.city && citiesSet.add(u.city.trim()));
+          if (citiesSet.size > 0) setCities(Array.from(citiesSet).sort());
+        }
+      } catch (err) { console.error(err); }
+    };
+    fetchCities();
+  }, [showAuthModal]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target as Node))
+        setCityDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredCities = cities.filter(c =>
+    !citySearch.trim() || new RegExp(citySearch.trim(), "i").test(c)
+  );
+
   const {
     id,
     name,
@@ -89,8 +140,91 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
   const displayServices = showFullServices ? services : services.slice(0, 3);
   const hasMoreServices = services.length > 3;
 
-  const handleProfileClick = () => {
-    navigate(`/profileview?id=${id}`);
+  const handleProfileClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate(`/profileview?id=${id}`);
+    } else {
+      setShowAuthModal(true);
+      setAuthStep(1);
+      setAuthError(null);
+    }
+  };
+
+  const clearAuthModal = () => {
+    setShowAuthModal(false);
+    setAuthStep(1);
+    setOtp("");
+    setAuthError(null);
+  };
+
+  const handleSendOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formName || !formPhone || !formCity) { setAuthError("Please fill all fields"); return; }
+    setAuthLoading(true);
+    setAuthError(null);
+
+    try {
+      await api.post("/api/verify/generate-otp", {
+        name: formName, city: formCity, phoneNumber: formPhone,
+      });
+
+      if (typeof window.sendOtp === "function") {
+        window.sendOtp("91" + formPhone,
+          () => { setAuthStep(2); setAuthLoading(false); },
+          (err) => { setAuthError(err?.message || "Failed to send OTP."); setAuthLoading(false); }
+        );
+      } else {
+        setAuthError("OTP Service not ready.");
+        setAuthLoading(false);
+      }
+    } catch (err: any) {
+      setAuthError(err.response?.data?.message || "Failed to initiate login");
+      setAuthLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (!otp || otp.length < 4) { setAuthError("Enter OTP"); return; }
+    setAuthLoading(true);
+    setAuthError(null);
+
+    if (typeof window.verifyOtp === "function") {
+      window.verifyOtp(otp, async (data) => {
+        try {
+          const tokenValue = typeof data === 'string' ? data : data?.message;
+          const response = await api.post("/api/verify/verify-msg91-token", {
+            token: tokenValue, phoneNumber: formPhone, name: formName, city: formCity
+          });
+
+          if (response.data.success) {
+            const { token, client, firebaseToken } = response.data;
+            localStorage.setItem("token", token);
+            localStorage.setItem("client", JSON.stringify(client));
+            if (firebaseToken) await signInWithCustomToken(auth, firebaseToken);
+
+            navigate(`/profileview?id=${id}`);
+            clearAuthModal();
+          } else {
+            throw new Error(response.data.message || "Verification failed");
+          }
+        } catch (err: any) {
+          setAuthError(err.response?.data?.message || err.message || "Login failed");
+          setAuthLoading(false);
+        }
+      }, () => {
+        setAuthError("Invalid OTP.");
+        setAuthLoading(false);
+      });
+    }
+  };
+
+  const handleResendOTP = () => {
+    setResending(true); setAuthError(null);
+    if (typeof window.retryOtp === "function") {
+      window.retryOtp(null, () => setResending(false), (err) => { setAuthError(err?.message); setResending(false); });
+    }
   };
 
   const handleMoreClick = (e: React.MouseEvent, type: 'specialty' | 'services') => {
@@ -120,10 +254,10 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
   return (
     <div
       className="group relative h-full flex flex-col rounded-[24px] border border-gray-100 bg-white p-4 sm:p-6 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.08)] hover:-translate-y-1.5 hover:border-[#FFA800]/20 cursor-pointer"
-      onClick={handleProfileClick}
+      onClick={(e) => handleProfileClick(e)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleProfileClick(); }}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handleProfileClick(e as any); }}
     >
       {/* Dynamic Brand Accent */}
       <div className="absolute top-0 right-0 h-24 w-24 bg-gradient-to-br from-[#FFA800]/5 to-transparent rounded-tr-[24px] pointer-events-none" />
@@ -283,18 +417,100 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
       {/* Profile Actions */}
       <div className="mt-4 sm:mt-6 flex items-center gap-2 sm:gap-3">
         <button
-          onClick={handleProfileClick}
+          onClick={(e) => handleProfileClick(e)}
           className="flex-1 rounded-xl bg-[#FFA800] py-2.5 text-[10px] sm:text-xs font-bold text-white shadow-lg shadow-[#FFA800]/20 hover:brightness-110 active:scale-[0.98] transition-all uppercase tracking-wide"
         >
           View Profile
         </button>
         <button
-          onClick={handleProfileClick}
+          onClick={(e) => handleProfileClick(e)}
           className="flex-1 rounded-xl bg-[#0f172a] py-2.5 text-[9px] sm:text-[11px] font-bold text-white uppercase tracking-widest hover:bg-black active:scale-[0.98] transition-all"
         >
           {pill}
         </button>
       </div>
+
+      {/* AUTH MODAL */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 text-left" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={clearAuthModal} />
+
+          <div className="relative w-full max-w-[400px] bg-white rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+            <button onClick={clearAuthModal} className="absolute right-6 top-6 z-10 p-2 text-gray-400 hover:text-gray-900 transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+
+            <div className="px-6 pt-12 pb-12">
+              <div className="text-center mb-10">
+                <h1 className="text-[24px] font-black text-gray-900 leading-tight">Verify Identity</h1>
+                <p className="mt-2 text-xs font-medium text-gray-500">
+                  {authStep === 1 ? "Verify to view expert profile details" : `Enter the OTP sent to +91 ${formPhone}`}
+                </p>
+              </div>
+
+              {authError && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 text-red-700 text-[11px]">
+                  <ShieldCheck className="w-4 h-4 shrink-0 text-red-400" />
+                  <p className="font-semibold">{authError}</p>
+                </div>
+              )}
+
+              {authStep === 1 ? (
+                <form onSubmit={handleSendOTP} className="space-y-4">
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FFA800]" />
+                    <input type="text" placeholder="Full Name" value={formName} onChange={(e) => setFormName(e.target.value)} className="w-full h-12 pl-12 pr-4 bg-[#F6F6F6] rounded-[20px] outline-none text-sm font-bold text-gray-800 border border-transparent focus:border-[#FFA800]/30 focus:bg-white focus:ring-4 focus:ring-[#FFA800]/5" required />
+                  </div>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-[#FFA800]" />
+                    <input type="tel" placeholder="Mobile Number" value={formPhone} onChange={(e) => setFormPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} className="w-full h-12 pl-12 pr-4 bg-[#F6F6F6] rounded-[20px] outline-none text-sm font-bold text-gray-800 border border-transparent focus:border-[#FFA800]/30 focus:bg-white focus:ring-4 focus:ring-[#FFA800]/5" required />
+                  </div>
+                  <div className="relative" ref={cityDropdownRef}>
+                    <button type="button" onClick={() => setCityDropdownOpen(!cityDropdownOpen)} className="w-full h-12 pl-4 pr-10 bg-[#F6F6F6] rounded-[20px] text-left flex items-center justify-between outline-none border border-transparent focus:border-[#FFA800]/30 focus:bg-white focus:ring-4 focus:ring-[#FFA800]/5">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-4 h-4 text-gray-400" />
+                        <span className={`text-sm font-bold ${formCity ? "text-gray-800" : "text-gray-400"}`}>{formCity || "Select City"}</span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${cityDropdownOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {cityDropdownOpen && (
+                      <div className="absolute z-20 w-full mt-2 bg-white border border-gray-100 rounded-[20px] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-2 border-b border-gray-50">
+                          <input type="text" placeholder="Search city..." value={citySearch} onChange={(e) => setCitySearch(e.target.value)} className="w-full px-3 py-1.5 bg-gray-50 rounded-[12px] text-xs border-none outline-none" autoFocus />
+                        </div>
+                        <div className="max-h-40 overflow-y-auto">
+                          {filteredCities.map(c => (
+                            <button key={c} type="button" onClick={() => { setFormCity(c); setCityDropdownOpen(false); }} className={`w-full px-4 py-2 text-left text-xs font-bold transition-colors hover:bg-orange-50 ${formCity === c ? "text-[#FFA800]" : "text-gray-700"}`}>{c}</button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <button type="submit" disabled={authLoading} className="w-full h-12 bg-[#FFA800] text-white rounded-[20px] text-sm font-black shadow-lg shadow-orange-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
+                    {authLoading ? <Loader className="w-5 h-5 animate-spin" /> : <>Continue <ArrowRight className="w-4 h-4" /></>}
+                  </button>
+                </form>
+              ) : (
+                <div className="space-y-6">
+                  <input type="text" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))} placeholder="0 0 0 0 0 0" className="w-full h-16 text-center bg-[#F6F6F6] rounded-[20px] outline-none text-[28px] font-black tracking-[0.4em] transition-all border border-transparent focus:border-[#FFA800]/30 focus:bg-white placeholder:tracking-normal placeholder:text-gray-200" autoFocus />
+                  <button onClick={handleVerifyOTP} disabled={authLoading || otp.length < 4} className="w-full h-12 bg-gray-900 text-white rounded-[20px] text-sm font-black shadow-xl transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2">
+                    {authLoading ? <Loader className="w-5 h-5 animate-spin" /> : "Verify Identity"}
+                  </button>
+                  <div className="flex items-center justify-between">
+                    <button onClick={() => { setAuthStep(1); setOtp(""); setAuthError(null); }} className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 flex items-center gap-1.5">
+                      <ArrowLeft className="w-3 h-3" /> Back
+                    </button>
+                    <button onClick={handleResendOTP} disabled={resending} className="text-[10px] font-black text-[#FFA800] uppercase tracking-widest hover:text-orange-600 flex items-center gap-1.5 disabled:opacity-50">
+                      {resending ? <Loader className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                      Resend OTP
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

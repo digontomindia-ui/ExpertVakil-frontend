@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api, { serviceAPI, serviceBookedAPI, publicUserAPI, challanAPI, type User as Advocate } from "../../services/api";
+import { signInWithCustomToken } from "firebase/auth";
+import { auth } from "../../lib/firebase";
 import {
   ArrowLeft,
   Loader,
@@ -349,74 +351,98 @@ export default function ServiceDetail() {
     setFormMessage("");
 
     try {
+      // 1. Backend generate-otp
       const response = await api.post("/api/verify/generate-otp", {
         name: formName || "User",
         city: formCity,
         phoneNumber: formMobile,
       });
 
-      if (response.data.success) {
+      if (response.data.verificationId) {
         setVerificationId(response.data.verificationId);
-        setShowOtpInput(true);
-        setStep(2);
-        setFormStatus("success");
-        setFormMessage("OTP sent to your mobile number");
+      }
 
-        // For testing - show OTP in console
-        if (response.data.testOtp) {
-          console.log("🔢 Test OTP:", response.data.testOtp);
-        }
+      // 2. MSG91 widget
+      if (typeof window.sendOtp === "function") {
+        window.sendOtp(
+          "91" + formMobile,
+          () => {
+            setShowOtpInput(true);
+            setStep(2);
+            setFormStatus("success");
+            setFormMessage("OTP sent to your mobile number");
+            setSendingOtp(false);
+          },
+          (err) => {
+            console.error("MSG91 sendOtp error:", err);
+            setFormStatus("error");
+            setFormMessage(err?.message || "MSG91 failed to send OTP.");
+            setSendingOtp(false);
+          }
+        );
       } else {
-        throw new Error(response.data.message || "Failed to send OTP");
+        setFormStatus("error");
+        setFormMessage("OTP Service is not ready. Please refresh the page.");
+        setSendingOtp(false);
       }
     } catch (err: any) {
       console.error("Error sending OTP:", err);
       setFormStatus("error");
       setFormMessage(err.response?.data?.message || "Failed to send OTP. Please try again.");
-    } finally {
       setSendingOtp(false);
     }
   };
 
   // Verify OTP
   const handleVerifyOtp = async () => {
-    if (!otp || otp.length < 6) {
+    if (!otp || otp.length < 4) {
       setFormStatus("error");
-      setFormMessage("Please enter a valid 6-digit OTP");
+      setFormMessage("Please enter a valid OTP");
       return;
     }
 
     setVerifyingOtp(true);
     setFormStatus("");
 
-    try {
-      const response = await api.post("/api/verify/verify-otp", {
-        verificationId,
-        otp,
-        phoneNumber: formMobile,
-      });
+    if (typeof window.verifyOtp === "function") {
+      window.verifyOtp(otp,
+        async (data) => {
+          try {
+            const tokenValue = typeof data === 'string' ? data : data?.message;
+            const response = await api.post("/api/verify/verify-msg91-token", {
+              token: tokenValue,
+              phoneNumber: formMobile,
+              name: formName,
+              city: formCity
+            });
 
-      if (response.data.success) {
-        setOtpVerified(true);
-        setShowOtpInput(false);
+            if (response.data.success) {
+              const { token, client, firebaseToken } = response.data;
+              localStorage.setItem("token", token);
+              localStorage.setItem("client", JSON.stringify(client));
+              if (firebaseToken) await signInWithCustomToken(auth, firebaseToken);
 
-        // Store client info
-        if (response.data.clientId) {
-          localStorage.setItem("clientId", response.data.clientId);
+              setOtpVerified(true);
+              setShowOtpInput(false);
+              setVerifyingOtp(false);
+
+              // Now create the lead/booking
+              await createLead(client.id);
+            } else {
+              throw new Error(response.data.message || "Verification failed");
+            }
+          } catch (err: any) {
+            setFormStatus("error");
+            setFormMessage(err.response?.data?.message || err.message || "Login failed");
+            setVerifyingOtp(false);
+          }
+        },
+        () => {
+          setFormStatus("error");
+          setFormMessage("Invalid OTP. Please check the code.");
+          setVerifyingOtp(false);
         }
-        localStorage.setItem("phone", formMobile);
-
-        // Now create the lead/booking
-        await createLead(response.data.clientId);
-      } else {
-        throw new Error(response.data.message || "Invalid OTP");
-      }
-    } catch (err: any) {
-      console.error("Error verifying OTP:", err);
-      setFormStatus("error");
-      setFormMessage(err.response?.data?.message || "Invalid OTP. Please try again.");
-    } finally {
-      setVerifyingOtp(false);
+      );
     }
   };
 
@@ -484,18 +510,30 @@ export default function ServiceDetail() {
           phoneNumber: formMobile,
         });
 
-        if (response.data.success) {
+        if (response.data.verificationId) {
           setVerificationId(response.data.verificationId);
-          setShowOtpInput(true);
-          setChallanError(null);
-          setChallanSearchStep(3);
-          if (response.data.testOtp) console.log("🔢 Test OTP:", response.data.testOtp);
+        }
+
+        if (typeof window.sendOtp === "function") {
+          window.sendOtp(
+            "91" + formMobile,
+            () => {
+              setShowOtpInput(true);
+              setChallanError(null);
+              setChallanSearchStep(3);
+              setSearchingChallan(false);
+            },
+            (err) => {
+              setChallanError(err?.message || "MSG91 failed to send OTP");
+              setSearchingChallan(false);
+            }
+          );
         } else {
-          throw new Error(response.data.message || "Failed to send OTP");
+          setChallanError("OTP Service not ready");
+          setSearchingChallan(false);
         }
       } catch (err: any) {
         setChallanError(err.response?.data?.message || "Failed to send OTP");
-      } finally {
         setSearchingChallan(false);
       }
       return;
@@ -503,34 +541,48 @@ export default function ServiceDetail() {
 
     // Step 3: Handle OTP -> Results
     if (challanSearchStep === 3) {
-      if (!otp || otp.length < 6) {
-        setChallanError("Please enter 6-digit OTP");
+      if (!otp || otp.length < 4) {
+        setChallanError("Please enter OTP");
         return;
       }
 
       setSearchingChallan(true);
-      try {
-        const response = await api.post("/api/verify/verify-otp", {
-          verificationId,
-          otp,
-          phoneNumber: formMobile,
-        });
+      if (typeof window.verifyOtp === "function") {
+        window.verifyOtp(otp,
+          async (data) => {
+            try {
+              const tokenValue = typeof data === 'string' ? data : data?.message;
+              const response = await api.post("/api/verify/verify-msg91-token", {
+                token: tokenValue,
+                phoneNumber: formMobile,
+                name: formName || "User",
+                city: formCity || "Online"
+              });
 
-        if (response.data.success) {
-          setOtpVerified(true);
-          setShowOtpInput(false);
-          localStorage.setItem("phone", formMobile);
-          if (response.data.clientId) localStorage.setItem("clientId", response.data.clientId);
+              if (response.data.success) {
+                const { token, client, firebaseToken } = response.data;
+                localStorage.setItem("token", token);
+                localStorage.setItem("client", JSON.stringify(client));
+                if (firebaseToken) await signInWithCustomToken(auth, firebaseToken);
 
-          // Proceed to search automatically after verification
-          await executeChallanSearch(formMobile);
-        } else {
-          throw new Error(response.data.message || "Invalid OTP");
-        }
-      } catch (err: any) {
-        setChallanError(err.response?.data?.message || "Invalid OTP");
-      } finally {
-        setSearchingChallan(false);
+                setOtpVerified(true);
+                setShowOtpInput(false);
+
+                // Proceed to search
+                await executeChallanSearch(formMobile);
+              } else {
+                throw new Error(response.data.message || "Verification failed");
+              }
+            } catch (err: any) {
+              setChallanError(err.response?.data?.message || err.message || "Verification failed");
+              setSearchingChallan(false);
+            }
+          },
+          () => {
+            setChallanError("Invalid OTP");
+            setSearchingChallan(false);
+          }
+        );
       }
       return;
     }
@@ -684,10 +736,10 @@ export default function ServiceDetail() {
                     ].map((item) => (
                       <div key={item.s} className="relative z-10 flex flex-col items-center group">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-500 transform ${challanSearchStep === item.s
-                            ? "bg-[#FFA800] text-white shadow-lg shadow-orange-200 scale-110"
-                            : challanSearchStep > item.s
-                              ? "bg-[#FFA800] text-white"
-                              : "bg-white border-2 border-gray-100 text-gray-300"
+                          ? "bg-[#FFA800] text-white shadow-lg shadow-orange-200 scale-110"
+                          : challanSearchStep > item.s
+                            ? "bg-[#FFA800] text-white"
+                            : "bg-white border-2 border-gray-100 text-gray-300"
                           }`}>
                           {challanSearchStep > item.s ? <Check className="w-4 h-4 stroke-[3]" /> : <item.icon className="w-4 h-4" />}
                         </div>
