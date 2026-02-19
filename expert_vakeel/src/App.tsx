@@ -32,7 +32,7 @@ function ScrollToTop() {
 
 
 // API Configuration
-const baseURL = "http://localhost:4000";
+const baseURL = "https://api.legalnetwork.in";
 
 // Types
 interface ApiResponse<T> {

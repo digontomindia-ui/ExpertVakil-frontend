@@ -2,10 +2,10 @@
 // API Configuration
 const API_CONFIG = {
   // Development URL
-  BASE_URL: "http://localhost:4000",
+  BASE_URL: "https://api.legalnetwork.in",
 
   // Production URL (uncomment when deploying)
-  // BASE_URL: "http://localhost:4000",
+  // BASE_URL: "https://api.legalnetwork.in",
 
   // API endpoints
   ENDPOINTS: {

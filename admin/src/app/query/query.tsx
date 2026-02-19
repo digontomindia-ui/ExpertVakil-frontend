@@ -4,7 +4,7 @@ import { Search, ChevronDown, MoreVertical, Edit, Trash2, Pencil, Trash, X, Save
 
 /**
  * QueriesCenter.tsx (Next.js, TypeScript)
- * - Fetches queries from http://localhost:4000/api/queries/
+ * - Fetches queries from https://api.legalnetwork.in/api/queries/
  * - Handles mixed shapes (legacy + new) and normalizes them
  * - Search, filters (category, source, target, visibility), sort (Newest, Most Answered)
  * - Responsive grid list; click card → slide-over details

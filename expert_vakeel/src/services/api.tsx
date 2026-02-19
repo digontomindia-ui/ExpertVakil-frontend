@@ -342,7 +342,7 @@ export interface ErrorResponse {
 
 // Environment configuration
 const getBaseURL = () => {
-  return "http://localhost:4000";
+  return "https://api.legalnetwork.in";
 };
 
 const api = axios.create({
@@ -369,7 +369,7 @@ api.interceptors.response.use(
         console.warn('Localhost server not responding, switching to production backend...');
 
         // Update base URL to production
-        api.defaults.baseURL = "http://localhost:4000";
+        api.defaults.baseURL = "https://api.legalnetwork.in";
         originalRequest._retry = true;
 
         // Retry the request with production URL
