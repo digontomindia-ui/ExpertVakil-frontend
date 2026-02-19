@@ -142,14 +142,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
 
   const handleProfileClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate(`/profileview?id=${id}`);
-    } else {
-      setShowAuthModal(true);
-      setAuthStep(1);
-      setAuthError(null);
-    }
+    navigate(`/profileview?id=${id}`);
   };
 
   const clearAuthModal = () => {

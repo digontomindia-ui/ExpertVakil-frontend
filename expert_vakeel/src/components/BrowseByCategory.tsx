@@ -206,15 +206,7 @@ export default function BrowseByCategoryPage({
   );
 
   const handleExplore = (category: string) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      if (onCategoryClick) onCategoryClick(category);
-    } else {
-      setPendingCategory(category);
-      setShowAuthModal(true);
-      setAuthStep(1);
-      setAuthError(null);
-    }
+    if (onCategoryClick) onCategoryClick(category);
   };
 
   const clearAuthModal = () => {

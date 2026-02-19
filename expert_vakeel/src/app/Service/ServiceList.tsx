@@ -91,15 +91,7 @@ export default function ServiceList() {
   }, [services, searchQuery]);
 
   const handleServiceClick = (serviceId: string) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate(`/service/${serviceId}`);
-    } else {
-      setSelectedServiceId(serviceId);
-      setShowAuthModal(true);
-      setAuthStep(1);
-      setAuthError(null);
-    }
+    navigate(`/service/${serviceId}`);
   };
 
   const clearAuthModal = () => {

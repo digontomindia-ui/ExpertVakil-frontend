@@ -79,16 +79,7 @@ export default function QuickAccessGrid() {
     const handleItemClick = (e: React.MouseEvent, item: any) => {
         e.preventDefault();
         const path = getPath(item);
-        const token = localStorage.getItem("token");
-
-        if (token || item.label === "More Services") {
-            navigate(path);
-        } else {
-            setTargetPath(path);
-            setShowAuthModal(true);
-            setAuthStep(1);
-            setAuthError(null);
-        }
+        navigate(path);
     };
 
     const clearAuthModal = () => {
