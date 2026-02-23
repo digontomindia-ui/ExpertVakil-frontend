@@ -70,7 +70,6 @@ export default function BlogListing() {
           </div>
         </div>
       </div>
-      </div >
     );
   }
 

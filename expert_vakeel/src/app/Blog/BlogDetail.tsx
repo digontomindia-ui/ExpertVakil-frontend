@@ -6,9 +6,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { publicBlogAPI, type Blog } from "../../services/api";
 import { Calendar, ArrowLeft, Share2, BookOpen } from "lucide-react";
 
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-
 export default function BlogDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -73,14 +70,12 @@ export default function BlogDetail() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-white">
-        <Header />
         <div className="mx-auto max-w-4xl px-4 py-8">
           <div className="text-center py-20">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-amber-500"></div>
             <p className="mt-4 text-gray-500 font-medium">Loading post...</p>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -88,7 +83,6 @@ export default function BlogDetail() {
   if (error || !blog) {
     return (
       <div className="min-h-[100dvh] bg-white">
-        <Header />
         <div className="mx-auto max-w-4xl px-4 py-16">
           <div className="text-center">
             <h1 className="text-2xl font-black text-[#1a365d] mb-4">Post Not Found</h1>
@@ -102,14 +96,12 @@ export default function BlogDetail() {
             </button>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="min-h-[100dvh] bg-white">
-      <Header />
 
       {/* Hero Section with Title */}
       <section className="bg-gradient-to-br from-amber-50 to-orange-50 pt-12 pb-16 border-b border-orange-100/50">
@@ -225,7 +217,6 @@ export default function BlogDetail() {
         </footer>
       </article>
 
-      <Footer />
     </div>
   );
 }
