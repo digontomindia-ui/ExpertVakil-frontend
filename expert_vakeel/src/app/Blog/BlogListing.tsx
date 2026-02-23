@@ -6,9 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { publicBlogAPI, type Blog } from "../../services/api";
 import { Calendar, ArrowRight, BookOpen } from "lucide-react";
 
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-
 export default function BlogListing() {
   const navigate = useNavigate();
   const [blogs, setBlogs] = useState<Blog[]>([]);
@@ -66,21 +63,19 @@ export default function BlogListing() {
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-white">
-        <Header />
         <div className="mx-auto max-w-6xl px-4 py-8">
           <div className="text-center py-20">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-amber-500"></div>
             <p className="mt-4 text-gray-500 font-medium">Loading blog posts...</p>
           </div>
         </div>
-        <Footer />
       </div>
+      </div >
     );
   }
 
   return (
     <div className="min-h-[100dvh] bg-white">
-      <Header />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 py-20 text-gray-900 border-b border-orange-100/50">
@@ -202,7 +197,6 @@ export default function BlogListing() {
         )}
       </div>
 
-      <Footer />
     </div>
   );
 }
