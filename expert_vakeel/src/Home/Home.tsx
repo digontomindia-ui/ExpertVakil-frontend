@@ -7,11 +7,121 @@ import { ChevronDown, Check, ArrowRight } from "lucide-react";
 import TopRatedProfiles from "../components/TopRatedProfiles";
 import BrowseByCategory from "../components/BrowseByCategory";
 import WhyExpertVakeel from "../components/whyexpertVakeel";
-import { queryAPI, publicUserAPI } from "../services/api";
-import type { Query } from "../services/api";
+import { queryAPI, publicUserAPI, publicBlogAPI } from "../services/api";
+import type { Query, Blog } from "../services/api";
 import useAuth from "../hooks/useAuth";
 import ServiceList from "../app/Service/ServiceList";
 import QuickAccessGrid from "../components/QuickAccessGrid";
+import { BookOpen, Calendar } from "lucide-react";
+
+function BlogSection() {
+  const navigate = useNavigate();
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        setLoading(true);
+        const res = await publicBlogAPI.getAll({ limit: 15 });
+        const allBlogs = res.data.data || [];
+        const publishedBlogs = allBlogs.filter((n: Blog) => n.published).slice(0, 3);
+        setBlogs(publishedBlogs);
+      } catch (err) {
+        console.error("Error fetching blogs for home:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, []);
+
+  const formatDate = (date: any) => {
+    if (!date) return "Recent";
+    try {
+      const d = date._seconds ? new Date(date._seconds * 1000) : new Date(date);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch { return "Recent"; }
+  };
+
+  if (loading && blogs.length === 0) return null;
+  if (!loading && blogs.length === 0) return null;
+
+  return (
+    <section className="bg-white py-16 sm:py-24">
+      <div className="mx-auto max-w-screen-xl px-4">
+        <div className="mb-12 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+          <div className="max-w-xl text-left">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-600">
+                Latest from our blog
+              </span>
+            </div>
+            <h2 className="text-3xl font-black tracking-tight text-gray-900 sm:text-5xl">
+              Legal <span className="text-amber-500">Insights</span>
+            </h2>
+            <p className="mt-4 text-sm sm:text-lg text-gray-500 font-medium">
+              Stay updated with the latest news, expert opinions, and legal developments in India.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/blogs')}
+            className="group flex items-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-bold text-gray-700 transition-all hover:bg-gray-50 hover:border-amber-500/20 hover:shadow-md whitespace-nowrap"
+          >
+            Read All Articles <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1 text-amber-500" />
+          </button>
+        </div>
+
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {blogs.map((blog) => (
+            <article
+              key={blog.id}
+              onClick={() => navigate(`/blog/${blog.id}`)}
+              className="group cursor-pointer flex flex-col overflow-hidden rounded-[2.5rem] bg-white border border-gray-100 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-100"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
+                {blog.image ? (
+                  <img src={blog.image} alt={blog.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-gray-300">
+                    <BookOpen size={40} strokeWidth={1} />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+
+              <div className="flex flex-1 flex-col p-8">
+                <div className="mb-4 flex items-center gap-3 text-[11px] font-bold text-gray-400 uppercase tracking-widest">
+                  <Calendar size={14} className="text-amber-500" />
+                  <span>{formatDate(blog.createdAt)}</span>
+                </div>
+
+                <h3 className="text-xl font-black text-[#1a365d] transition-colors group-hover:text-amber-500 line-clamp-2 leading-tight mb-4">
+                  {blog.title}
+                </h3>
+
+                <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed font-medium mb-6">
+                  {blog.subtitle || blog.description}
+                </p>
+
+                <div className="mt-auto flex items-center justify-between pt-6 border-t border-gray-50">
+                  <span className="text-xs font-black text-amber-500 uppercase tracking-widest">
+                    {blog.category || "Legal Insights"}
+                  </span>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-500 transition-all group-hover:bg-amber-500 group-hover:text-white group-hover:rotate-45 shadow-sm">
+                    <ArrowRight size={18} />
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 
 export default function Home() {
   const navigate = useNavigate();
@@ -677,6 +787,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Legal Blog Section */}
+      <BlogSection />
 
       {/* Why Expert Vakeel */}
       <WhyExpertVakeel />

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa";
 import api, { serviceBookedAPI, publicUserAPI, challanAPI } from "../../services/api";
 import {
     ArrowLeft,
@@ -565,13 +566,34 @@ export default function ChallanStatus() {
                                     )}
                                 </div>
 
-                                <div className="pt-4">
+                                <div className="pt-4 space-y-4">
                                     <button
                                         onClick={() => navigate("/services?specialization=Traffic%20Challan")}
                                         className="w-full py-4 bg-gray-900 hover:bg-black text-white rounded-2xl text-lg font-extrabold transition-all active:scale-[0.98]"
                                     >
                                         Talk to Expert to Resolve
                                     </button>
+
+                                    <div className="flex flex-col sm:flex-row items-center justify-between p-5 bg-green-50/50 border border-green-100 rounded-3xl gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-green-200 shrink-0">
+                                                <FaWhatsapp size={24} />
+                                            </div>
+                                            <div className="text-left">
+                                                <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-0.5">Need Instant Help?</p>
+                                                <p className="text-base font-black text-gray-900">WhatsApp Expert</p>
+                                            </div>
+                                        </div>
+                                        <a
+                                            href="https://wa.me/919711840150?text=I%20need%20expert%20help%20with%20my%20challan"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full sm:w-auto px-6 py-3 bg-green-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 transition-all text-center flex items-center justify-center gap-2"
+                                        >
+                                            Chat Now <ArrowRight size={14} />
+                                        </a>
+                                    </div>
+
                                     <button
                                         onClick={() => setStep(1)}
                                         className="w-full py-4 text-gray-400 text-sm font-bold hover:text-blue-600 transition-colors"

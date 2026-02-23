@@ -780,6 +780,20 @@ export const publicQueryAnswerAPI = {
     publicApi.get(`/api/query-answers/query/${queryId}`, { params }),
 };
 
+export const publicNewsAPI = {
+  // Get all news posts (public access)
+  getAll: (params?: any): Promise<{ data: { success: boolean; data: NewsPost[] } }> =>
+    publicApi.get("/api/news", { params }),
+
+  // Get news post by ID (public access)
+  getById: (id: string): Promise<{ data: { success: boolean; data: NewsPost } }> =>
+    publicApi.get(`/api/news/${id}`),
+
+  // Increment views (public access)
+  incrementViews: (id: string): Promise<{ data: { success: boolean; data: NewsPost } }> =>
+    publicApi.post(`/api/news/${id}/views/increment`),
+};
+
 // ==================== SERVICE TYPES ====================
 
 export interface Service {

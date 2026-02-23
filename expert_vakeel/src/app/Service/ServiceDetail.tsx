@@ -1,6 +1,6 @@
-// src/app/Service/ServiceDetail.tsx
 // Aligned with ExpertVakeel Lead Data Requirements & Service Page Documentation
 import { useEffect, useState, useRef } from "react";
+import { FaWhatsapp } from "react-icons/fa";
 import { useParams, useNavigate } from "react-router-dom";
 import api, { serviceAPI, serviceBookedAPI, publicUserAPI, challanAPI, type User as Advocate } from "../../services/api";
 import { signInWithCustomToken } from "firebase/auth";
@@ -902,10 +902,34 @@ export default function ServiceDetail() {
                 {service.categories.map((cat, idx) => (
                   <li key={idx} className="flex items-start gap-3">
                     <ChevronRight className="w-4 h-4 text-[#c53030] shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{cat}</span>
+                    <span className="text-sm text-gray-700 font-medium">{cat}</span>
                   </li>
                 ))}
               </ul>
+
+              {isTrafficChallanService && (
+                <div className="mt-8 pt-6 border-t border-gray-100">
+                  <div className="flex flex-col sm:flex-row items-center justify-between p-5 bg-green-50/50 border border-green-100 rounded-3xl gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-green-200 shrink-0">
+                        <FaWhatsapp size={24} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-0.5">Direct Help</p>
+                        <p className="text-base font-black text-gray-900">WhatsApp Expert</p>
+                      </div>
+                    </div>
+                    <a
+                      href="https://wa.me/919711840150?text=I%20need%20expert%20help%20with%20my%20challan"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-6 py-3 bg-green-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 transition-all text-center flex items-center justify-center gap-2"
+                    >
+                      Chat Now <ArrowRight size={14} />
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

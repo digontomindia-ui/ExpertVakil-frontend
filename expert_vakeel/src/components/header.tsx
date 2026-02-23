@@ -157,6 +157,13 @@ export default function Header() {
 
 
               <Link
+                to="/blogs"
+                className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
+              >
+                Blog
+              </Link>
+
+              <Link
                 to="/login"
                 className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
               >
@@ -250,6 +257,15 @@ export default function Header() {
             >
               Check Challan
             </Link> */}
+
+            {/* Blog */}
+            <Link
+              to="/blogs"
+              onClick={() => setOpen(false)}
+              className="block w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FFA800] transition-colors"
+            >
+              Blog
+            </Link>
 
             {/* Login / Register */}
             <Link
