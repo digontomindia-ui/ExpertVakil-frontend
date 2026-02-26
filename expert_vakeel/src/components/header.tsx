@@ -55,12 +55,16 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [servicesOpen]);
 
-  // Navigate to service page
-  const handleServiceClick = (serviceId: string) => {
+  const generateSlug = (name: string) => {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return slug === 'traffic-challan' ? 'challan' : slug;
+  };
+
+  const handleServiceClick = (service: Service) => {
     setServicesOpen(false);
     setMobileServicesOpen(false);
     setOpen(false);
-    navigate(`/service/${serviceId}`);
+    navigate(`/service/${generateSlug(service.name)}`);
   };
 
   return (
@@ -114,7 +118,7 @@ export default function Header() {
                           services.map((service) => (
                             <button
                               key={service.id}
-                              onClick={() => handleServiceClick(service.id)}
+                              onClick={() => handleServiceClick(service)}
                               className="group flex items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-gray-600 hover:bg-gray-50 hover:text-[#1a365d] transition-all"
                             >
                               <div className="h-1.5 w-1.5 rounded-full bg-gray-200 group-hover:bg-[#FFA800] transition-colors" />
@@ -216,7 +220,7 @@ export default function Header() {
                       {services.map((service) => (
                         <button
                           key={service.id}
-                          onClick={() => handleServiceClick(service.id)}
+                          onClick={() => handleServiceClick(service)}
                           className="block w-full text-left rounded-lg px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-[#FFA800] transition-colors"
                         >
                           {service.name}

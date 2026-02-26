@@ -90,8 +90,13 @@ export default function ServiceList() {
     );
   }, [services, searchQuery]);
 
-  const handleServiceClick = (serviceId: string) => {
-    navigate(`/service/${serviceId}`);
+  const generateSlug = (name: string) => {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return slug === 'traffic-challan' ? 'challan' : slug;
+  };
+
+  const handleServiceClick = (service: Service) => {
+    navigate(`/service/${generateSlug(service.name)}`);
   };
 
   const clearAuthModal = () => {
@@ -196,17 +201,32 @@ export default function ServiceList() {
     }
   };
 
+  const serviceIconMap: Record<string, string> = {
+    "Legal Matters": "/assets/services_logo/p11.png",
+    "Marriage Registration": "/assets/services_logo/p1.png",
+    "Civil Disputes": "/assets/services_logo/p2.png",
+    "Business & Contracts": "/assets/services_logo/p3.png",
+    "Domestic Violence": "/assets/services_logo/p5.png",
+    "Consumer Complaints": "/assets/services_logo/p4.png",
+    "Traffic Challan": "/assets/services_logo/p6.png",
+    "Cheque Bounce": "/assets/services_logo/p7.png",
+    "Property / Land Disputes": "/assets/services_logo/p10.png",
+    "Criminal / Bail / FIR": "/assets/services_logo/p8.png",
+    "Divorce & Family Matters": "/assets/services_logo/p9.png",
+  };
+
   // Helper function to get image URL - use service.image if available, otherwise fallback to default
   const getServiceImage = useCallback((service: Service, index: number): string => {
-    // If image already failed, use fallback directly
-    if (service.image && failedImages.has(service.id)) {
-      return `/assets/services_logo/p${(index % 10) + 1}.png`;
-    }
-    if (service.image && service.image.trim()) {
+    // If image exists and hasn't failed, use it
+    if (service.image && service.image.trim() && !failedImages.has(service.id)) {
       return service.image;
     }
-    // Fallback to default images based on index (mod 10 to cycle through available images)
-    return `/assets/services_logo/p${(index % 10) + 1}.png`;
+    // Return mapped predefined icon based on service name
+    if (serviceIconMap[service.name]) {
+      return serviceIconMap[service.name];
+    }
+    // Fallback to default images based on index
+    return `/assets/services_logo/p${(index % 11) + 1}.png`;
   }, [failedImages]);
 
   // Handle image error - mark as failed and don't retry
@@ -298,7 +318,7 @@ export default function ServiceList() {
               return (
                 <div
                   key={service.id}
-                  onClick={() => handleServiceClick(service.id)}
+                  onClick={() => handleServiceClick(service)}
                   className="group flex cursor-pointer flex-col items-center text-center transition-all"
                 >
                   {/* ICON BOX */}

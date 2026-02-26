@@ -104,8 +104,8 @@ export default function BlogDetail() {
     <div className="min-h-[100dvh] bg-white">
 
       {/* Hero Section with Title */}
-      <section className="bg-gradient-to-br from-amber-50 to-orange-50 pt-12 pb-16 border-b border-orange-100/50">
-        <div className="mx-auto max-w-4xl px-4">
+      <section className="bg-gradient-to-br from-amber-50 to-orange-50 pt-28 pb-16 border-b border-orange-100/50">
+        <div className="mx-auto max-w-5xl px-4">
           <button
             onClick={() => navigate('/blogs')}
             className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-amber-600 transition-colors uppercase tracking-widest"
@@ -123,7 +123,7 @@ export default function BlogDetail() {
               )}
             </div>
 
-            <h1 className="text-3xl font-black text-[#1a365d] md:text-5xl leading-tight mb-8">
+            <h1 className="text-4xl font-black text-[#1a365d] md:text-6xl leading-[1.1] mb-8 tracking-tight">
               {blog.title}
             </h1>
 
@@ -149,14 +149,14 @@ export default function BlogDetail() {
         </div>
       </section>
 
-      <article className="mx-auto max-w-4xl px-4 py-12">
+      <article className="mx-auto max-w-3xl px-4 py-20">
         {/* Cover Image */}
-        <div className="mb-12 overflow-hidden rounded-[2.5rem] shadow-2xl shadow-amber-500/10 ring-1 ring-gray-900/5">
+        <div className="mb-16 overflow-hidden rounded-[2.5rem] shadow-2xl shadow-amber-500/10 ring-1 ring-gray-900/5 group">
           {blog.image ? (
             <img
               src={blog.image}
               alt={blog.title}
-              className="h-auto w-full object-cover"
+              className="max-h-[600px] w-full object-cover transition-transform duration-1000 group-hover:scale-105"
             />
           ) : (
             <div className="flex aspect-video items-center justify-center bg-gray-50 text-gray-200">

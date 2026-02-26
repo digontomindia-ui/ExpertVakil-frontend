@@ -69,10 +69,15 @@ export default function QuickAccessGrid() {
         );
     }, [services]);
 
+    const generateSlug = (name: string) => {
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        return slug === 'traffic-challan' ? 'challan' : slug;
+    };
+
     const getPath = (item: { label: string, path: string }) => {
         if (item.label === "More Services") return "/services";
         const service = findService(item.label);
-        if (service) return `/service/${service.id}`;
+        if (service) return `/service/${generateSlug(service.name)}`;
         return item.path;
     };
 
@@ -180,17 +185,17 @@ export default function QuickAccessGrid() {
     };
 
     const items = [
-        { label: "Legal Matters", localIcon: "/assets/services_logo/p1.png", path: "/services" },
-        { label: "Marriage Registration", localIcon: "/assets/services_logo/p2.png", path: "/services" },
-        { label: "Civil Disputes", localIcon: "/assets/services_logo/p3.png", path: "/services" },
-        { label: "Business & Contracts", localIcon: "/assets/services_logo/p4.png", path: "/services" },
+        { label: "Legal Matters", localIcon: "/assets/services_logo/p11.png", path: "/services" },
+        { label: "Marriage Registration", localIcon: "/assets/services_logo/p1.png", path: "/services" },
+        { label: "Civil Disputes", localIcon: "/assets/services_logo/p2.png", path: "/services" },
+        { label: "Business & Contracts", localIcon: "/assets/services_logo/p3.png", path: "/services" },
         { label: "Domestic Violence", localIcon: "/assets/services_logo/p5.png", path: "/services" },
-        { label: "Consumer Complaints", localIcon: "/assets/services_logo/p6.png", path: "/services" },
-        { label: "Traffic Challan", localIcon: "/assets/services_logo/p7.png", path: "/challan-status" },
-        { label: "Cheque Bounce", localIcon: "/assets/services_logo/p8.png", path: "/services" },
-        { label: "Property / Land Disputes", localIcon: "/assets/services_logo/p9.png", path: "/services" },
-        { label: "Criminal / Bail / FIR", localIcon: "/assets/services_logo/p10.png", path: "/services" },
-        { label: "Divorce & Family Matters", localIcon: "/assets/services_logo/p11.png", path: "/services" },
+        { label: "Consumer Complaints", localIcon: "/assets/services_logo/p4.png", path: "/services" },
+        { label: "Traffic Challan", localIcon: "/assets/services_logo/p6.png", path: "/challan-status" },
+        { label: "Cheque Bounce", localIcon: "/assets/services_logo/p7.png", path: "/services" },
+        { label: "Property / Land Disputes", localIcon: "/assets/services_logo/p10.png", path: "/services" },
+        { label: "Criminal / Bail / FIR", localIcon: "/assets/services_logo/p8.png", path: "/services" },
+        { label: "Divorce & Family Matters", localIcon: "/assets/services_logo/p9.png", path: "/services" },
         { label: "More Services", localIcon: "", path: "/services" },
     ];
 

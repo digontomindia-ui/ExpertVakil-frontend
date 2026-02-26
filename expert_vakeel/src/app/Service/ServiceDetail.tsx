@@ -213,6 +213,11 @@ export default function ServiceDetail() {
         cat.toLowerCase().includes("challan"),
     );
 
+  const generateSlug = (name: string) => {
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return slug === 'traffic-challan' ? 'challan' : slug;
+  };
+
   useEffect(() => {
     const loadService = async () => {
       if (!id) {
@@ -224,12 +229,31 @@ export default function ServiceDetail() {
       try {
         setLoading(true);
         setError(null);
-        const response = await serviceAPI.getById(id);
+        let foundService = null;
 
-        if (response.data.success && response.data.data) {
-          setService(response.data.data);
+        // Try to fetch by ID directly first
+        try {
+          const idResponse = await serviceAPI.getById(id);
+          if (idResponse.data.success && idResponse.data.data) {
+            foundService = idResponse.data.data;
+          }
+        } catch (err) {
+          // If fetching by ID fails, it might be a slug
+          console.log("Not a valid ID, trying slug...");
+        }
+
+        // If not found, fetch all and try to match the slug
+        if (!foundService) {
+          const allServicesResp = await serviceAPI.getAll({ limit: 100 });
+          if (allServicesResp.data.success && allServicesResp.data.data) {
+            foundService = allServicesResp.data.data.find((s: Service) => generateSlug(s.name) === id);
+          }
+        }
+
+        if (foundService) {
+          setService(foundService);
           // Load advocates for this category
-          loadAdvocates(response.data.data.name);
+          loadAdvocates(foundService.name);
         } else {
           throw new Error("Service not found");
         }

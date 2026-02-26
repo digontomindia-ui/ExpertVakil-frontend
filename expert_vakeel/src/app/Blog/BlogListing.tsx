@@ -77,7 +77,7 @@ export default function BlogListing() {
     <div className="min-h-[100dvh] bg-white">
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50 py-20 text-gray-900 border-b border-orange-100/50">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#fffbeb] to-[#fff7ed] pt-32 pb-24 text-gray-900 border-b border-orange-100/30">
         {/* Abstract Background Pattern */}
         <div className="absolute left-0 top-0 h-full w-full opacity-40">
           <div className="absolute -left-10 -top-10 h-64 w-64 rounded-full bg-amber-200/30 blur-3xl"></div>
@@ -89,8 +89,8 @@ export default function BlogListing() {
             <BookOpen size={14} />
             <span>Expert Legal Insights</span>
           </div>
-          <h1 className="mb-6 text-4xl font-black tracking-tight md:text-6xl text-[#1a365d]">
-            Lawyer <span className="text-amber-500">Blog</span>
+          <h1 className="mb-6 text-5xl font-black tracking-tight md:text-7xl text-[#1a365d] leading-[1.05]">
+            Our Legal <span className="text-amber-500">Blog</span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-gray-600 md:text-xl font-medium">
             Discover in-depth articles, legal tips, and expert guides from our professional network.
@@ -141,7 +141,7 @@ export default function BlogListing() {
             {filteredBlogs.map((blog) => (
               <article
                 key={blog.id}
-                className="group flex flex-col cursor-pointer overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-100"
+                className="group flex flex-col cursor-pointer overflow-hidden rounded-[2.5rem] border border-gray-100 bg-white shadow-sm transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl hover:shadow-amber-500/10 hover:border-amber-100"
                 onClick={() => navigate(`/blog/${blog.id}`)}
               >
                 {/* Image Section */}
