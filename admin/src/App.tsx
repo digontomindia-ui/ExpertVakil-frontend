@@ -39,6 +39,7 @@ import ServicePostPage from './app/service/post/ServicePostPage'
 import BookedServices from './app/service/booked/BookedServices'
 import DeleteRequestsPage from './app/delete-requests/view-all/DeleteRequestsPage'
 import CategoriesPage from './app/category/CategoriesPage'
+import ChallanPayments from './app/Challan/ChallanPayments'
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -368,6 +369,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CategoriesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/challan-payments"
+        element={
+          <ProtectedRoute>
+            <ChallanPayments />
           </ProtectedRoute>
         }
       />

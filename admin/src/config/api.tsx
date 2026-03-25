@@ -2,7 +2,7 @@
 // API Configuration
 const API_CONFIG = {
   // Development URL
-  BASE_URL: "https://api.legalnetwork.in",
+  BASE_URL: import.meta.env.VITE_API_URL || "https://api.legalnetwork.in",
 
   // Production URL (uncomment when deploying)
   // BASE_URL: "https://api.legalnetwork.in",
@@ -78,6 +78,13 @@ const API_CONFIG = {
     CATEGORIES: '/api/categories',
     CATEGORY_BY_ID: (id: string) => `/api/categories/${id}`,
     CATEGORIES_REORDER: '/api/categories/reorder',
+
+    // Challan endpoints
+    CHALLAN_PAYMENTS: '/api/challan/payments',
+
+    // Settings endpoints
+    SETTINGS: '/api/settings',
+    SETTING_BY_KEY: (key: string) => `/api/settings/${key}`,
   }
 };
 
@@ -1474,6 +1481,74 @@ export const CategoriesAPI = {
       method: 'POST',
       path: API_CONFIG.ENDPOINTS.CATEGORIES_REORDER,
       body: { categoryIds },
+      signal,
+    });
+  },
+};
+
+/* ------------------------------- Challan ---------------------------------- */
+
+export type ChallanPayment = {
+  id: string;
+  orderId: string;
+  paymentId: string;
+  vehicleNumber: string;
+  challanNumber: string;
+  amount: number;
+  name: string;
+  phone: string;
+  city: string;
+  status: string;
+  createdAt: string | Date;
+};
+
+export const ChallanAPI = {
+  list(signal?: AbortSignal) {
+    return request<{ success: boolean; data: ChallanPayment[] }>({
+      method: "GET",
+      path: API_CONFIG.ENDPOINTS.CHALLAN_PAYMENTS,
+      signal,
+    });
+  },
+  remove(id: string, signal?: AbortSignal) {
+    return request<{ success: boolean }>({
+      method: "DELETE",
+      path: `${API_CONFIG.ENDPOINTS.CHALLAN_PAYMENTS}/${id}`,
+      signal,
+    });
+  },
+};
+
+/* ------------------------------- Settings --------------------------------- */
+
+export type Setting = {
+  id: string;
+  key: string;
+  value: any;
+  updatedAt: string | Date;
+  createdAt: string | Date;
+};
+
+export const SettingsAPI = {
+  list(signal?: AbortSignal) {
+    return request<{ success: boolean; data: Setting[] }>({
+      method: "GET",
+      path: API_CONFIG.ENDPOINTS.SETTINGS,
+      signal,
+    });
+  },
+  getByKey(key: string, signal?: AbortSignal) {
+    return request<{ success: boolean; data: Setting }>({
+      method: "GET",
+      path: API_CONFIG.ENDPOINTS.SETTING_BY_KEY(enc(key)),
+      signal,
+    });
+  },
+  update(body: { key: string; value: any }, signal?: AbortSignal) {
+    return request<{ success: boolean; data: Setting }>({
+      method: "POST",
+      path: `${API_CONFIG.ENDPOINTS.SETTINGS}/update`,
+      body,
       signal,
     });
   },

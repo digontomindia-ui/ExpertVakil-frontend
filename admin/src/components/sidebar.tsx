@@ -11,6 +11,7 @@ import {
   AmpersandIcon,
   MessageSquare,
   Grid3X3,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import logo from '../assets/logo.jpg';
 import * as Panels from "./panels"; // { Dashboard, Lawyers, Orders, Reports, Docs, Settings }
@@ -205,6 +206,8 @@ const ALL_NAV = [
   { key: "Services", label: "Services", icon: PackageSearch },
   { key: "BookedServices", label: "Booked Services", icon: MessageSquare },
   { key: "Categories", label: "Categories", icon: Grid3X3 },
+  { key: "ChallanPayments", label: "Challan Payments", icon: BarChart3 },
+  { key: "Settings", label: "Global Settings", icon: SettingsIcon },
   { key: "DeleteRequests", label: "Delete Requests", icon: LogOut },
 ] as const;
 

@@ -14,6 +14,8 @@ import SubAdminsCenter from "../app/subadmin/view-all/subadmins";
 import SupportViewall from "../app/support/Viewall";
 import DeleteRequestsPage from "../app/delete-requests/view-all/DeleteRequestsPage";
 import CategoriesPage from "../app/category/CategoriesPage";
+import ChallanPaymentsPage from "../app/Challan/ChallanPayments";
+import GlobalSettingsPage from "../app/Settings/GlobalSettings";
 
 export function Dashboard() {
   return <DashboardPage />;
@@ -73,6 +75,14 @@ export function DeleteRequests() {
 
 export function Categories() {
   return <CategoriesPage />;
+}
+
+export function ChallanPayments() {
+  return <ChallanPaymentsPage />;
+}
+
+export function Settings() {
+  return <GlobalSettingsPage />;
 }
 
 // Note: SupportDetails and SupportAnswer are used within the SupportViewall component
