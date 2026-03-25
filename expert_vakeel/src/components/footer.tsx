@@ -104,7 +104,7 @@ export default function Footer() {
               © {new Date().getFullYear()} <span className="text-white">Expert vakeel</span>. All Rights Reserved.
             </p>
             <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-gray-600">
-              Powered By <span className="text-[#FFA800]">Legal Network</span>
+              Developed By <a href="https://www.digontom.com/" target="_blank" rel="noopener noreferrer" className="text-[#FFA800] hover:underline transition-all">Digontom</a>
             </p>
           </div>
         </div>

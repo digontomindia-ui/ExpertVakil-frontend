@@ -131,20 +131,21 @@ export default function MyBookings() {
 
             {/* Content Section */}
             <div className="relative mx-auto -mt-20 max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-                {!user && bookings.length === 0 ? (
+                {/* Login requirement removed for public access as requested */}
+                {false ? (
                     <div className="rounded-3xl bg-white p-12 text-center shadow-xl ring-1 ring-gray-100 md:p-20">
                         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-blue-50">
                             <Package className="h-10 w-10 text-blue-400" />
                         </div>
-                        <h3 className="mb-2 text-xl font-bold text-gray-900">Login Required</h3>
+                        <h3 className="mb-2 text-xl font-bold text-gray-900">Lawyer Login Required</h3>
                         <p className="mb-8 text-gray-500">
-                            Please login to view and track your service bookings. If you've booked as a guest, please use the same device.
+                            Please login as a lawyer to view and track your service bookings.
                         </p>
                         <button
                             onClick={() => navigate("/login")}
                             className="rounded-full bg-black px-8 py-3 text-sm font-semibold text-white transition-transform hover:scale-105 hover:shadow-lg"
                         >
-                            Login / Register
+                            Lawyer Login / Register
                         </button>
                     </div>
                 ) : bookings.length === 0 ? (

@@ -210,7 +210,7 @@ export default function BlogDetail() {
             <div className="flex items-center gap-4">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Source:</span>
               <span className="text-xs font-black text-amber-500 uppercase tracking-widest">
-                Legal Network
+                Expert Vakeel · Developed By <a href="https://www.digontom.com/" target="_blank" rel="noopener noreferrer" className="hover:underline">Digontom</a>
               </span>
             </div>
           </div>

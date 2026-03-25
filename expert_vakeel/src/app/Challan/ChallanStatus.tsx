@@ -18,7 +18,9 @@ import {
     ShieldCheck,
     ClipboardCheck,
     FileText,
-    ArrowRight
+    ArrowRight,
+    Star,
+    HelpCircle
 } from "lucide-react";
 
 // Types from ServiceDetail
@@ -94,23 +96,43 @@ export default function ChallanStatus() {
 
     // Results State
     const [challanData, setChallanData] = useState<ProcessedChallanData | null>(null);
+    const [selectedChallanIds, setSelectedChallanIds] = useState<string[]>([]);
+    const [isPledged, setIsPledged] = useState(false);
+    const [pledgeRewardPercentage, setPledgeRewardPercentage] = useState(40); // Admin-controllable
+    const [showPaymentSummary, setShowPaymentSummary] = useState(false);
 
-    // Fetch cities on load
+    // Fetch cities and settings on load
     useEffect(() => {
-        const fetchCities = async () => {
+        const fetchData = async () => {
             try {
+                // 1. Fetch cities
                 const response = await publicUserAPI.getAll({ limit: "1000" });
                 if (response.data && Array.isArray(response.data.data)) {
                     const citiesSet = new Set<string>();
-                    response.data.data.forEach((u: any) => u.city && citiesSet.add(u.city.trim()));
-                    const finalCities = Array.from(citiesSet).sort();
-                    if (finalCities.length > 0) setCities(finalCities);
+                    response.data.data.forEach((user: any) => {
+                        if (user.city) {
+                            const cleanedCity = user.city.trim();
+                            if (cleanedCity) citiesSet.add(cleanedCity);
+                        }
+                    });
+                    setCities(Array.from(citiesSet).sort());
+                }
+
+                // 2. Fetch pledge reward percentage from admin settings
+                try {
+                    const settingsRes = await api.get("/api/settings/pledgeRewardPercentage");
+                    if (settingsRes.data.success && settingsRes.data.data) {
+                        setPledgeRewardPercentage(Number(settingsRes.data.data.value));
+                    }
+                } catch (err) {
+                    console.log("Using default reward percentage (40%)");
                 }
             } catch (err) {
-                console.error("Error fetching cities:", err);
+                console.error("Error fetching initial data:", err);
             }
         };
-        fetchCities();
+
+        fetchData();
     }, []);
 
     // Handle click outside city dropdown
@@ -178,6 +200,80 @@ export default function ChallanStatus() {
     };
 
     // Verify OTP & Fetch Challan
+    const handlePayment = async (amount: number, challanNumber: string) => {
+        setLoading(true);
+        try {
+            const orderRes = await api.post("/api/challan/create-order", {
+                amount,
+                vehicleNumber: vehicleNumber.toUpperCase(),
+                challanNumber,
+                name,
+                phone,
+                city
+            });
+
+            if (orderRes.data.success) {
+                const options = {
+                    key: orderRes.data.keyId, 
+                    amount: orderRes.data.order.amount,
+                    currency: "INR",
+                    name: "Expert Vakeel",
+                    description: `Challan Payment - ${challanNumber}`,
+                    order_id: orderRes.data.order.id,
+                    handler: async (response: any) => {
+                        try {
+                            const verifyRes = await api.post("/api/challan/verify-payment", {
+                                ...response,
+                                vehicleNumber: vehicleNumber.toUpperCase(),
+                                challanNumber,
+                                amount,
+                                name,
+                                phone,
+                                city
+                            });
+
+                            if (verifyRes.data.success) {
+                                // Success state
+                                const paidIds = challanNumber.split(', ');
+                                setChallanData(prev => {
+                                    if (!prev) return prev;
+                                    return {
+                                        ...prev,
+                                        pendingChallans: prev.pendingChallans.filter(c => !paidIds.includes(c.id) && !paidIds.includes(c.challanNumber)),
+                                        totalPending: prev.totalPending - amount
+                                    };
+                                });
+                                setSelectedChallanIds([]);
+                                setShowPaymentSummary(false);
+                                alert("Payment successful! Challan status updated.");
+                            }
+                        } catch (err) {
+                            console.error("Verification failed:", err);
+                            alert("Payment verification failed. Please contact support.");
+                        }
+                    },
+                    prefill: {
+                        name: name,
+                        email: `${phone}@expertvakeel.com`,
+                        contact: phone
+                    },
+                    theme: {
+                        color: "#1a365d"
+                    }
+                };
+
+                const rzp = new (window as any).Razorpay(options);
+                rzp.open();
+            }
+        } catch (err: any) {
+            console.error("Payment error:", err);
+            setError("Failed to initiate payment");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Verify OTP & Fetch Challan
     const handleVerifyAndFetch = async () => {
         if (!otp || otp.length < 6) {
             setError("Enter valid 6-digit OTP");
@@ -201,9 +297,47 @@ export default function ChallanStatus() {
 
             const clientId = verifyRes.data.clientId;
 
-            // 2. Clear previous session/memory (per user request) - actually just use fresh inputs
+            // 2. Demo Logic
+            if (vehicleNumber.trim().toUpperCase() === "CHALLAN1234") {
+                const demoData: ProcessedChallanData = {
+                    vehicleNumber: "CHALLAN1234",
+                    ownerName: name || "Demo User",
+                    pendingChallans: [
+                        {
+                            id: "demo-1",
+                            challanNumber: "CH-DEMO-2024-001",
+                            date: "2024-03-20",
+                            location: "Sec 17, Chandigarh",
+                            violation: "Red Light Jump",
+                            amount: 1000,
+                            status: "pending",
+                            offences: [{ offence_name: "Red Light Jump", offence_fine: "1000", motor_vehicle_act: "Sec 184" }],
+                            challanPlace: "Chandigarh",
+                            accusedName: name || "Demo User"
+                        },
+                        {
+                            id: "demo-2",
+                            challanNumber: "CH-DEMO-2024-002",
+                            date: "2024-03-15",
+                            location: "Mohali Toll Plaza",
+                            violation: "Over Speeding",
+                            amount: 2000,
+                            status: "pending",
+                            offences: [{ offence_name: "Over Speeding", offence_fine: "2000", motor_vehicle_act: "Sec 183" }],
+                            challanPlace: "Mohali",
+                            accusedName: name || "Demo User"
+                        }
+                    ],
+                    totalPending: 3000
+                };
+                setChallanData(demoData);
+                setSelectedChallanIds(demoData.pendingChallans.map(c => c.challanNumber));
+                setStep(4);
+                setLoading(false);
+                return;
+            }
 
-            // 3. Fetch Challan
+            // 3. Fetch Challan (Real API)
             const challanRes = await challanAPI.search(
                 vehicleNumber.toUpperCase(),
                 `${phone}@expertvakeel.com`,
@@ -232,12 +366,14 @@ export default function ChallanStatus() {
 
                 const totalPending = processedChallans.reduce((sum: number, c: any) => sum + c.amount, 0);
 
-                setChallanData({
+                const newChallanData = {
                     vehicleNumber: vehicleNumber.toUpperCase(),
                     ownerName: challanPayload.data[0]?.accusedName || "Not Available",
                     pendingChallans: processedChallans,
                     totalPending,
-                });
+                };
+                setChallanData(newChallanData);
+                setSelectedChallanIds(newChallanData.pendingChallans.map(c => c.challanNumber));
 
                 // 4. Create Lead for records
                 await serviceBookedAPI.create({
@@ -332,7 +468,7 @@ export default function ChallanStatus() {
                         )}
 
                         {error && (
-                            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 text-red-700 text-sm animate-in fade-in slide-in-from-top-2">
+                            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-3xl flex items-start gap-3 text-red-700 text-sm animate-in fade-in slide-in-from-top-2">
                                 <AlertCircle className="w-5 h-5 shrink-0" />
                                 <p className="font-medium">{error}</p>
                             </div>
@@ -506,64 +642,112 @@ export default function ChallanStatus() {
 
                         {step === 4 && challanData && (
                             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                                <div className="bg-gradient-to-br from-[#1a365d] to-[#0f172a] rounded-3xl p-8 text-white shadow-2xl shadow-blue-900/20">
+                                <div className="bg-gradient-to-br from-[#1a365d] to-[#0f172a] rounded-xl p-8 text-white shadow-2xl shadow-blue-900/20">
                                     <div className="flex justify-between items-start mb-6">
                                         <div className="space-y-1">
                                             <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest">Registered Owner</p>
-                                            <h3 className="text-xl font-black">{challanData.ownerName}</h3>
+                                            <h4 className="text-xl font-black">{challanData.ownerName}</h4>
                                         </div>
                                         <div className="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
                                             <p className="text-[10px] text-blue-200 font-bold uppercase tracking-wider mb-0.5">Vehicle</p>
                                             <p className="font-mono font-bold text-sm tracking-widest">{challanData.vehicleNumber}</p>
                                         </div>
                                     </div>
-
-                                    <div className="pt-6 border-t border-white/10 flex justify-between items-end">
-                                        <div>
-                                            <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Total Outstanding</p>
-                                            <p className="text-4xl font-black text-[#FFA800]">₹{challanData.totalPending.toLocaleString()}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-3xl font-black">{challanData.pendingChallans.length}</p>
-                                            <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest">Active Challans</p>
-                                        </div>
-                                    </div>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Challan Details</h4>
+                                    <div className="flex items-center justify-between ml-1">
+                                        <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Challan Details</h4>
+                                        <button
+                                            onClick={() => {
+                                                if (selectedChallanIds.length === challanData.pendingChallans.length) {
+                                                    setSelectedChallanIds([]);
+                                                } else {
+                                                    setSelectedChallanIds(challanData.pendingChallans.map(c => c.challanNumber));
+                                                }
+                                            }}
+                                            className="text-[10px] font-black text-[#1a365d] uppercase tracking-widest hover:underline"
+                                        >
+                                            {selectedChallanIds.length === challanData.pendingChallans.length ? "Deselect All" : "Select All"}
+                                        </button>
+                                    </div>
+
                                     {challanData.pendingChallans.length > 0 ? (
-                                        challanData.pendingChallans.map((c, i) => (
-                                            <div key={i} className="group relative bg-white border border-gray-100 rounded-3xl p-6 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-300">
-                                                <div className="flex justify-between items-start mb-4">
-                                                    <div className="bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-                                                        <span className="text-[11px] font-bold text-gray-500 font-mono tracking-wider">{c.challanNumber}</span>
+                                        <div className="space-y-4">
+                                            {challanData.pendingChallans.map((c, i) => (
+                                                <div
+                                                    key={i}
+                                                    onClick={() => {
+                                                        setSelectedChallanIds(prev =>
+                                                            prev.includes(c.challanNumber)
+                                                                ? prev.filter(id => id !== c.challanNumber)
+                                                                : [...prev, c.challanNumber]
+                                                        );
+                                                    }}
+                                                    className={`group relative bg-white border rounded-xl p-6 transition-all duration-300 cursor-pointer ${selectedChallanIds.includes(c.challanNumber) ? "border-blue-500 shadow-xl shadow-blue-500/5 ring-4 ring-blue-50" : "border-gray-100 hover:shadow-lg hover:shadow-blue-900/5"}`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-4">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedChallanIds.includes(c.challanNumber) ? "bg-blue-500 border-blue-500 text-white" : "border-gray-200 bg-white"}`}>
+                                                                {selectedChallanIds.includes(c.challanNumber) && <Check className="w-4 h-4 stroke-[4]" />}
+                                                            </div>
+                                                            <div className="bg-gray-50 px-3 py-1.5 rounded-3xl border border-gray-100">
+                                                                <span className="text-[11px] font-bold text-gray-500 font-mono tracking-wider">{c.challanNumber}</span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-xl font-black text-red-600">₹{c.amount}</span>
                                                     </div>
-                                                    <span className="text-xl font-black text-red-600">₹{c.amount}</span>
-                                                </div>
-                                                <h4 className="font-extrabold text-gray-900 text-lg mb-3 leading-tight">{c.violation}</h4>
-                                                <div className="flex flex-wrap gap-4">
-                                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                                                        <CalendarDays className="w-4 h-4 text-blue-500" /> {c.date}
+                                                    <h4 className="font-extrabold text-gray-900 text-lg mb-3 leading-tight">{c.violation}</h4>
+                                                    <div className="flex flex-wrap gap-4">
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                                                            <CalendarDays className="w-4 h-4 text-blue-500" /> {c.date}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
+                                                            <MapPin className="w-4 h-4 text-orange-500" /> {c.location}
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                                                        <MapPin className="w-4 h-4 text-orange-500" /> {c.location}
+                                                </div>
+                                            ))}
+
+                                            {/* Pledge Reward Card In-List */}
+                                            {selectedChallanIds.length > 0 && (
+                                                <div className="mt-8 animate-in zoom-in duration-500 translate-y-2">
+                                                    <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100 rounded-xl overflow-hidden shadow-lg shadow-amber-200/20">
+                                                        <div className="bg-amber-100/50 px-6 py-4 flex justify-between items-center border-b border-amber-100">
+                                                            <span className="text-[11px] font-black text-amber-900 uppercase tracking-widest">Pledge & Claim Rewards</span>
+                                                            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-amber-600 shadow-sm">
+                                                                <Star className="w-5 h-5 fill-current" />
+                                                            </div>
+                                                        </div>
+                                                        <div className="p-6">
+                                                            <div className="flex items-end justify-between gap-4">
+                                                                <div>
+                                                                    <p className="text-3xl font-black text-gray-900">₹{challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0).toLocaleString()}</p>
+                                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total amount selected</p>
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setShowPaymentSummary(true)}
+                                                                    className="px-8 h-14 bg-[#0097B2] hover:bg-[#00ADC8] text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-cyan-100 transition-all active:scale-95 whitespace-nowrap"
+                                                                >
+                                                                    Proceed To Pay <ArrowRight size={18} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-4 text-center">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setSelectedChallanIds([])}
+                                                            className="text-xs font-black text-gray-300 uppercase tracking-widest hover:text-gray-900 transition-colors"
+                                                        >
+                                                            Cancel Selection
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div className="absolute right-6 bottom-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <CheckCircle2 className="w-6 h-6 text-blue-100" />
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-12 bg-green-50 rounded-[32px] border border-green-100">
-                                            <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4 text-green-600">
-                                                <CheckCircle2 className="w-8 h-8" />
-                                            </div>
-                                            <h4 className="text-xl font-black text-green-900 mb-1">No Pending Challans</h4>
-                                            <p className="text-green-700 font-medium">Your vehicle record is perfectly clean!</p>
+                                            )}
                                         </div>
-                                    )}
+                                    ) : null}
                                 </div>
 
                                 <div className="pt-4 space-y-4">
@@ -585,7 +769,7 @@ export default function ChallanStatus() {
                                             </div>
                                         </div>
                                         <a
-                                            href="https://wa.me/919711840150?text=I%20need%20expert%20help%20with%20my%20challan"
+                                            href="https://wa.me/919968739968?text=I%20need%20expert%20help%20with%20my%20challan"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="w-full sm:w-auto px-6 py-3 bg-green-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 transition-all text-center flex items-center justify-center gap-2"
@@ -606,6 +790,170 @@ export default function ChallanStatus() {
                     </div>
                 </div>
 
+                {/* PRO-PAYMENT MODAL / SUMMARY VIEW */}
+                {showPaymentSummary && challanData && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 overflow-y-auto pt-16 md:pt-36 pb-10">
+                        <div className="fixed inset-0 bg-[#0f172a]/90 backdrop-blur-md" onClick={() => setShowPaymentSummary(false)} />
+                        
+                        <div className="relative w-full max-w-4xl bg-[#F0F4F8] rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
+                            {/* Header */}
+                            <div className="bg-white px-8 py-8 flex items-center justify-between border-b border-gray-100">
+                                <button onClick={() => setShowPaymentSummary(false)} className="flex items-center gap-2 text-gray-500 font-black text-[10px] uppercase tracking-widest hover:text-gray-900 transition-colors">
+                                    <ArrowLeft size={14} strokeWidth={3} /> Payment Summary
+                                </button>
+                                <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-2xl border border-gray-100">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-3xl flex items-center justify-center text-blue-600">
+                                        <Car size={16} strokeWidth={3} />
+                                    </div>
+                                    <span className="font-mono font-black text-gray-900 tracking-widest text-xs">{vehicleNumber}</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col lg:flex-row">
+                                {/* Left Side: Options */}
+                                <div className="flex-1 p-6 lg:p-12 space-y-6 lg:space-y-10">
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl lg:text-2xl font-black text-gray-900 leading-tight">Final Settlement</h3>
+                                        <p className="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-[0.2em]">Select your method</p>
+                                    </div>
+
+                                    <div className="space-y-4 lg:space-y-8 animate-in slide-in-from-left-4 duration-500">
+                                        <div
+                                            onClick={() => setIsPledged(!isPledged)}
+                                            className={`group relative overflow-hidden rounded-xl p-6 lg:p-8 border-2 transition-all duration-500 cursor-pointer ${isPledged ? "bg-gradient-to-br from-green-500 to-emerald-600 border-green-400 shadow-2xl shadow-green-200" : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-900/5"}`}
+                                        >
+                                            <div className="relative z-10 flex items-start justify-between">
+                                                <div className="space-y-4">
+                                                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${isPledged ? "bg-white/20 text-white rotate-12 scale-110" : "bg-blue-50 text-blue-600"}`}>
+                                                        <ShieldCheck size={28} strokeWidth={2.5} />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className={`text-xl font-black mb-1 transition-colors ${isPledged ? "text-white" : "text-gray-900"}`}>Pledge to Drive Safely</h4>
+                                                        <p className={`text-xs font-bold leading-relaxed transition-colors ${isPledged ? "text-green-50" : "text-gray-500"}`}>Commit to zero traffic violations for 1 year<br />and unlock instant settlement rewards.</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className={`flex flex-col items-center gap-2 transition-all duration-500 ${isPledged ? "translate-x-0 opacity-100" : "translate-x-4 opacity-70"}`}>
+                                                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isPledged ? "bg-white border-white text-green-600" : "border-gray-200"}`}>
+                                                        {isPledged && <Check size={18} strokeWidth={4} />}
+                                                    </div>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${isPledged ? "text-white" : "text-gray-400"}`}>{isPledged ? "Applied!" : "Claim"}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-2 lg:gap-4">
+                                            {["Instant Benefit", "Court-Free", "Clean Record"].map((perk, i) => (
+                                                <div key={i} className="bg-white/60 backdrop-blur-sm p-3 lg:p-4 rounded-xl border border-white flex flex-col items-center text-center gap-1.5 lg:gap-2">
+                                                    <div className="w-1.5 lg:w-2 h-1.5 lg:h-2 rounded-full bg-blue-500" />
+                                                    <span className="text-[8px] lg:text-[9px] font-black text-gray-500 uppercase tracking-wider lg:tracking-widest leading-none outline-none">{perk}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Checkout Summary */}
+                                <div className="w-full lg:w-[420px] bg-white lg:border-l border-gray-100 p-6 lg:p-12 flex flex-col shadow-[-20px_0_40px_rgba(0,0,0,0.02)]">
+                                    <div className="flex-1">
+                                        <h4 className="text-[10px] lg:text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 lg:mb-10 flex items-center justify-between">
+                                            Checkout Summary
+                                            <span className="text-[8px] lg:text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">{selectedChallanIds.length} ITEMS</span>
+                                        </h4>
+
+                                        <div className="space-y-4 lg:space-y-6 mb-8 lg:mb-12">
+                                            <div className="flex justify-between items-center group">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-gray-500 font-black text-sm uppercase tracking-tighter">Online Challan</span>
+                                                </div>
+                                                <span className="text-gray-900 font-black text-lg">₹{challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0).toLocaleString()}</span>
+                                            </div>
+
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-500 font-black text-sm uppercase tracking-tighter">Convenience Fee</span>
+                                                <span className="text-gray-900 font-black text-lg">₹{(selectedChallanIds.length * 200).toLocaleString()}</span>
+                                            </div>
+
+                                            <div className="pt-6 border-t border-gray-50 flex justify-between items-center">
+                                                <span className="text-gray-900 font-black uppercase tracking-[0.2em] text-[10px]">Total Selection</span>
+                                                <span className="text-gray-900 font-black text-2xl">₹{(
+                                                    challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) + 
+                                                    (selectedChallanIds.length * 200)
+                                                ).toLocaleString()}</span>
+                                            </div>
+
+                                            {isPledged && (
+                                                <div className="pt-6 animate-in slide-in-from-top-4 duration-500">
+                                                    <div className="flex justify-between items-center text-blue-600 font-black py-5 px-6 bg-blue-50/80 rounded-xl border border-blue-100 relative overflow-hidden group">
+                                                        <div className="relative z-10">
+                                                            <p className="text-[10px] uppercase tracking-widest mb-1 opacity-60">Pledge Reward</p>
+                                                            <p className="text-2xl font-black">-₹{(challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) * (pledgeRewardPercentage / 100)).toLocaleString()}</p>
+                                                        </div>
+                                                        <Star className="w-8 h-8 opacity-10 absolute right-4 top-1/2 -translate-y-1/2 rotate-12" />
+                                                    </div>
+                                                    <div className="mt-4 flex items-center gap-3 px-5 py-4 bg-green-50 rounded-xl border border-green-100 shadow-sm shadow-green-900/5">
+                                                        <div className="w-8 h-8 bg-green-500 text-white rounded-3xl flex items-center justify-center shadow-lg shadow-green-200 shrink-0">
+                                                            <CheckCircle2 size={16} strokeWidth={3} />
+                                                        </div>
+                                                        <p className="text-[11px] font-black text-green-700 leading-tight">YOU SAVED ₹{(challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) * (pledgeRewardPercentage / 100)).toLocaleString()} BY PLEDGING!</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-8 border-t border-gray-100 space-y-6">
+                                        <div className="flex justify-between items-end">
+                                            <div>
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1">Final Payment</span>
+                                                <span className="text-4xl font-black text-gray-900">₹{(
+                                                    (
+                                                        challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) + 
+                                                        (selectedChallanIds.length * 200)
+                                                    ) - (isPledged ? (challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) * (pledgeRewardPercentage / 100)) : 0)
+                                                ).toLocaleString()}</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">Tax Inclusive</p>
+                                                <p className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">Instant Receipt</p>
+                                            </div>
+                                        </div>
+
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const subtotal = challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0);
+                                                const total = (
+                                                    subtotal + 
+                                                    (selectedChallanIds.length * 200)
+                                                ) - (isPledged ? (subtotal * (pledgeRewardPercentage / 100)) : 0);
+                                                handlePayment(total, selectedChallanIds.join(', '));
+                                            }}
+                                            className="w-full h-18 bg-[#0097B2] hover:bg-[#00ADC8] text-white rounded-[28px] text-[20px] font-black shadow-2xl shadow-cyan-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-4 group"
+                                        >
+                                            Proceed To Pay <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" strokeWidth={3} />
+                                        </button>
+                                        
+                                        <div className="flex items-center justify-center gap-6 pt-2">
+                                            <div className="flex flex-col items-center gap-1 opacity-30">
+                                                <ShieldCheck size={14} />
+                                                <span className="text-[7px] font-black uppercase tracking-widest">Secure</span>
+                                            </div>
+                                            <div className="flex flex-col items-center gap-1 opacity-30">
+                                                <CheckCircle2 size={14} />
+                                                <span className="text-[7px] font-black uppercase tracking-widest">Verified</span>
+                                            </div>
+                                            <div className="flex flex-col items-center gap-1 opacity-30">
+                                                <User size={14} />
+                                                <span className="text-[7px] font-black uppercase tracking-widest">Private</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Trust Badges */}
                 <div className="mt-12 flex flex-wrap justify-center gap-8 opacity-50 grayscale transition-all hover:grayscale-0 hover:opacity-100">
                     <div className="flex items-center gap-2">
@@ -625,3 +973,5 @@ export default function ChallanStatus() {
         </div>
     );
 }
+
+

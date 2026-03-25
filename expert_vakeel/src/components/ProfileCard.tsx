@@ -266,7 +266,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
       {/* Profile Header */}
       <div className="flex flex-col items-center text-center">
         <div className="relative mb-2 sm:mb-6">
-          <div className="h-16 w-16 sm:h-28 sm:w-28 overflow-hidden rounded-full ring-4 ring-white shadow-xl transition-transform duration-500 group-hover:scale-105">
+          <div className="h-24 w-24 sm:h-28 sm:w-28 overflow-hidden rounded-full ring-4 ring-white shadow-xl transition-transform duration-500 group-hover:scale-105">
             <img
               src={avatarUrl || '/assets/default-avatar.png'}
               alt={name}
@@ -309,12 +309,12 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
       </div>
 
       {/* Divider */}
-      <div className="hidden sm:block my-3 sm:my-5 h-px w-full bg-gradient-to-r from-transparent via-gray-100 to-transparent" />
+      <div className="my-3 sm:my-5 h-px w-full bg-gradient-to-r from-transparent via-gray-100 to-transparent" />
 
       {/* Profile Metrics */}
       <div className="flex-grow space-y-2.5 sm:space-y-4">
         {/* Experience */}
-        <div className="hidden sm:flex items-center gap-3">
+        <div className="flex items-center gap-3">
           <div className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg bg-orange-50 text-[#FFA800]">
             <FaShieldAlt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
@@ -325,7 +325,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
         </div>
 
         {/* Location / Courts */}
-        <div className="hidden sm:flex items-start gap-3">
+        <div className="flex items-start gap-3">
           <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-500">
             <FaMapMarkerAlt className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
@@ -336,7 +336,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
         </div>
 
         {/* Specialization */}
-        <div className="hidden sm:flex items-start gap-3">
+        <div className="flex items-start gap-3">
           <div className="flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-purple-50 text-purple-500">
             <FaGavel className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
@@ -358,7 +358,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
 
         {/* Languages */}
         {languages.length > 0 && (
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-50 text-green-500">
               <FaGlobe className="h-4 w-4" />
             </div>
@@ -371,7 +371,7 @@ export default function ProfileCard({ profile, ratingStats }: ProfileCardProps) 
 
         {/* Services */}
         {services.length > 0 && (
-          <div className="hidden sm:flex items-start gap-3">
+          <div className="flex items-start gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
               <FaBriefcase className="h-4 w-4" />
             </div>

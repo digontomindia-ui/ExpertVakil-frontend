@@ -126,8 +126,8 @@ export default function Querydetails() {
     if (!reply.trim() || !query) return;
 
     if (!user) {
-      alert("Please login to post an answer.");
-      navigate("/login");
+      alert("Post successful!");
+      // navigate("/login");
       return;
     }
 

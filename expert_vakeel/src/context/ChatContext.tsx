@@ -201,98 +201,11 @@ export const ChatProvider: React.FC<ChatProviderProps> = ({ children }) => {
   }, [conversationStarted, loadConversations]);
 
   const startConversation = useCallback(async (otherUserId: string, otherUserName?: string) => {
-    try {
-      // Get current user info
-      const token = localStorage.getItem("token");
-      const clientData = localStorage.getItem("client");
-
-      let currentUserId = null;
-      let client = null;
-
-      if (token && clientData && clientData !== "undefined") {
-        try {
-          client = JSON.parse(clientData);
-          currentUserId = client.id || client._id;
-        } catch (err) {
-          console.error("Error parsing client data:", err);
-        }
-      }
-
-      // Cache the user name immediately if provided
-      if (otherUserName && otherUserId) {
-        setUserNameCache(prev => new Map(prev).set(otherUserId, otherUserName));
-      }
-
-      // Create client contact record and conversation inbox if we have both client and lawyer IDs
-      if (currentUserId && otherUserId) {
-        try {
-          // Sync client profile to Firebase first (so mobile app can see it)
-          if (client) {
-            await syncClientProfileToFirebase(currentUserId, client);
-          }
-
-          // Create client contact record
-          await clientContactAPI.create({
-            clientId: currentUserId,
-            lawyerId: otherUserId,
-            contactType: 'chat',
-          });
-          console.log('Client contact record created for conversation');
-
-          // Create conversation inbox entries in Firebase
-          await chatService.createConversationInbox(currentUserId, otherUserId, otherUserName);
-          console.log('Conversation inbox created in Firebase');
-        } catch (contactError) {
-          console.error('Failed to create client contact or conversation inbox:', contactError);
-          // Don't fail the conversation start if contact creation fails
-        }
-      }
-
-      // Find existing conversation or create new one
-      const existingConversation = conversations.find(
-        (conv) => conv.otherUserId === otherUserId || conv.senderId === otherUserId || conv.receiverId === otherUserId
-      );
-
-      if (existingConversation) {
-        setCurrentConversation(existingConversation);
-      } else {
-        // Create local conversation object for immediate UI update
-        // The real Firebase document will be picked up by the real-time listener
-        const newConversation: InboxModel = {
-          archive: false,
-          seen: true,
-          senderId: otherUserId,
-          receiverId: currentUserId || '',
-          otherUserId: otherUserId,
-          lastMessage: '',
-          timestamp: new Date(),
-          userName: otherUserName,
-        };
-        setCurrentConversation(newConversation);
-
-        // Trigger conversation refresh to show new chat in sidebar
-        setConversationStarted(Date.now());
-      }
-
-      // Navigate to chat page
-      navigate('/chat', {
-        state: {
-          otherUserId,
-          otherUserName,
-          conversation: existingConversation
-        }
-      });
-    } catch (error) {
-      console.error('Error starting conversation:', error);
-      // Still navigate to chat even if contact creation fails
-      navigate('/chat', {
-        state: {
-          otherUserId,
-          otherUserName
-        }
-      });
-    }
-  }, [conversations, navigate, syncClientProfileToFirebase]);
+    // Redirect to WhatsApp as internal chat is disabled
+    const message = encodeURIComponent(`Hello ${otherUserName || 'there'}, I found your profile on Expert Vakeel and would like to connect.`);
+    const whatsappUrl = `https://wa.me/919968739968?text=${message}`;
+    window.open(whatsappUrl, "_blank");
+  }, []);
 
   const getUserName = useCallback(async (userId: string): Promise<string> => {
     // Check cache first

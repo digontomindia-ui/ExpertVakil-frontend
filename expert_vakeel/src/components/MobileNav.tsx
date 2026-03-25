@@ -8,7 +8,7 @@ export default function MobileNav() {
     const navItems = [
         { label: "Home", icon: Home, path: "/" },
         { label: "Services", icon: LayoutGrid, path: "/services" },
-        { label: "Chat", icon: MessageSquare, path: "https://wa.me/919711840150", external: true },
+        { label: "Chat", icon: MessageSquare, path: "https://wa.me/919968739968", external: true },
         { label: "Ask a Lawyer", icon: MessageCircle, path: "/queries" },
     ];
 

@@ -207,11 +207,11 @@ export default function SupportPage() {
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  <span>+91-9711840150</span>
+                  <span>+91-9968739968</span>
                 </p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  <span>+91-9711840150</span>
+                  <span>+91-9968739968</span>
                 </p>
               </div>
             </div>

@@ -18,6 +18,7 @@ import {
   Linkedin,
   Copy,
 } from "lucide-react";
+import { FaWhatsapp, FaFacebook, FaLinkedin, FaTwitter } from "react-icons/fa";
 import {
   userAPI,
   ratingReviewAPI,
@@ -31,6 +32,7 @@ import RatingModal from "../../components/RatingModal";
 /* ---------------- Types ---------------- */
 
 interface ProfileData {
+  id: string;
   name: string;
   avatar: string;
   location: string;
@@ -164,7 +166,11 @@ export default function ProfileView() {
   }, [clientId, searchParams]);
 
   const handleSendMessage = () => {
-    if (userId && profileData) startConversation(userId, profileData.name);
+    if (profileData) {
+      const message = encodeURIComponent(`Hello ${profileData.name}, I found your profile on Expert Vakeel and would like to connect.`);
+      const whatsappUrl = `https://wa.me/919968739968?text=${message}`;
+      window.open(whatsappUrl, "_blank");
+    }
   };
 
   // fetch data
@@ -190,6 +196,7 @@ export default function ProfileView() {
         }
 
         const pd: ProfileData = {
+          id: user.id,
           name: user.fullName || "Unknown User",
           avatar: user.profilePic || "/assets/default-avatar.png",
           location: user.courts?.join(", ") || "Not specified",
@@ -326,8 +333,14 @@ export default function ProfileView() {
             {/* Avatar */}
             <div className="flex justify-center md:block">
               <div className="relative">
-                <div className="h-24 w-24 overflow-hidden rounded-full shadow-lg ring-4 ring-white sm:h-32 sm:w-32 md:h-36 md:w-36 lg:h-40 lg:w-40">
-                  <img src={p.avatar} alt={p.name} className="h-full w-full object-cover" />
+                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full shadow-lg ring-4 ring-white md:h-36 md:w-36 lg:h-40 lg:w-40 bg-gradient-to-br from-[#1a365d] to-[#2a4a7d]">
+                  {p.avatar && !p.avatar.includes("default-avatar.png") ? (
+                    <img src={p.avatar} alt={p.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-3xl font-black text-white md:text-4xl lg:text-5xl">
+                      {p.name?.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -376,8 +389,8 @@ export default function ProfileView() {
                 className="w-full"
                 onClick={() => {
                   if (!clientId) {
-                    const currentPath = window.location.pathname + window.location.search;
-                    navigate(`/login?redirect=${encodeURIComponent(currentPath)}&action=rate`);
+                    alert("Rating feature requires login as a lawyer.");
+                    // navigate(`/login?redirect=${encodeURIComponent(currentPath)}&action=rate`);
                     return;
                   }
                   setShowRatingModal(true);
@@ -402,28 +415,28 @@ export default function ProfileView() {
               <div className="flex w-max gap-1">
                 <button
                   onClick={() => setActiveTab("bio")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "bio" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors cursor-pointer ${activeTab === "bio" ? "bg-[#FFC928] text-gray-900 shadow-sm border border-black" : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Bio
                 </button>
                 <button
                   onClick={() => setActiveTab("reviews")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "reviews" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors cursor-pointer ${activeTab === "reviews" ? "bg-[#FFC928] text-gray-900 shadow-sm border border-black" : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Reviews ({Array.isArray(reviews) ? reviews.length : 0})
                 </button>
                 <button
                   onClick={() => setActiveTab("share")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "share" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors cursor-pointer ${activeTab === "share" ? "bg-[#FFC928] text-gray-900 shadow-sm border border-black" : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Share Profile
                 </button>
                 <button
                   onClick={() => setActiveTab("report")}
-                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${activeTab === "report" ? "bg-[#FFC928] text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors cursor-pointer ${activeTab === "report" ? "bg-[#FFC928] text-gray-900 shadow-sm border border-black" : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Report Profile
@@ -449,25 +462,25 @@ export default function ProfileView() {
                   <div className="space-y-3 text-sm">
                     {p.gender && (
                       <div className="flex items-start">
-                        <span className="w-24 font-medium text-gray-700">Gender:</span>
+                        <span className="w-24 sm:w-32 shrink-0 font-medium text-gray-700">Gender:</span>
                         <span className="capitalize text-gray-600">{p.gender}</span>
                       </div>
                     )}
                     {p.city && (
                       <div className="flex items-start">
-                        <span className="w-24 font-medium text-gray-700">City:</span>
+                        <span className="w-24 sm:w-32 shrink-0 font-medium text-gray-700">City:</span>
                         <span className="text-gray-600">{p.city}</span>
                       </div>
                     )}
                     {p.completeAddress && p.isAddressPublic && (
                       <div className="flex items-start">
-                        <span className="w-24 font-medium text-gray-700">Address:</span>
+                        <span className="w-24 sm:w-32 shrink-0 font-medium text-gray-700">Address:</span>
                         <span className="text-gray-600">{p.completeAddress}</span>
                       </div>
                     )}
                     {p.languages?.length ? (
                       <div className="flex items-start">
-                        <span className="w-24 font-medium text-gray-700">Languages:</span>
+                        <span className="w-24 sm:w-32 shrink-0 font-medium text-gray-700">Languages:</span>
                         <span className="text-gray-600">{p.languages.join(", ")}</span>
                       </div>
                     ) : null}
@@ -478,11 +491,11 @@ export default function ProfileView() {
                   <h3 className="mb-4 text-lg font-semibold text-gray-900">Contact & Stats</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex items-start">
-                      <span className="w-32 font-medium text-gray-700">Total Reviews:</span>
+                      <span className="w-32 shrink-0 font-medium text-gray-700">Total Reviews:</span>
                       <span className="text-gray-600">{p.ratingStats?.reviewCount || 0}</span>
                     </div>
                     <div className="flex items-start">
-                      <span className="w-32 font-medium text-gray-700">Average Rating:</span>
+                      <span className="w-32 shrink-0 font-medium text-gray-700">Average Rating:</span>
                       <span className="text-gray-600">{p.rating.toFixed(1)} ⭐</span>
                     </div>
                   </div>
@@ -498,6 +511,19 @@ export default function ProfileView() {
                       {p.specializations.map((spec, idx) => (
                         <span key={idx} className="rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
                           {spec}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {p.services?.length ? (
+                  <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 p-4 sm:p-5 md:p-6">
+                    <h3 className="mb-4 text-lg font-semibold text-gray-900">Services</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {p.services.map((service, idx) => (
+                        <span key={idx} className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+                          {service}
                         </span>
                       ))}
                     </div>
@@ -555,10 +581,47 @@ export default function ProfileView() {
                   }}
                   className="flex flex-col items-center gap-2"
                 >
-                  <div className="rounded-full bg-gray-200 p-3 hover:bg-gray-300 transition">
-                    <Copy className="h-6 w-6 text-gray-700" />
+                  <div className="rounded-full bg-slate-100 p-3 hover:bg-slate-200 transition">
+                    <Copy className="h-6 w-6 text-slate-700" />
                   </div>
-                  <span className="text-xs font-medium">Link</span>
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Link</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    const text = encodeURIComponent(`Check out this legal expert on Expert Vakeel: ${window.location.href}`);
+                    window.open(`https://wa.me/?text=${text}`, "_blank");
+                  }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="rounded-full bg-green-100 p-3 hover:bg-green-200 transition">
+                    <FaWhatsapp className="h-6 w-6 text-green-600" />
+                  </div>
+                  <span className="text-[10px] font-bold text-green-700 uppercase tracking-wider">WhatsApp</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, "_blank");
+                  }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="rounded-full bg-blue-100 p-3 hover:bg-blue-200 transition">
+                    <FaFacebook className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Facebook</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank");
+                  }}
+                  className="flex flex-col items-center gap-2"
+                >
+                  <div className="rounded-full bg-sky-100 p-3 hover:bg-sky-200 transition">
+                    <FaLinkedin className="h-6 w-6 text-sky-600" />
+                  </div>
+                  <span className="text-[10px] font-bold text-sky-700 uppercase tracking-wider">LinkedIn</span>
                 </button>
               </div>
             </div>
@@ -570,7 +633,14 @@ export default function ProfileView() {
               <Flag className="mx-auto mb-3 h-12 w-12 text-gray-400" />
               <h3 className="mb-2 text-lg font-semibold text-gray-900">Report Profile</h3>
               <p className="mb-4 text-sm text-gray-500">Report this profile if it violates community guidelines.</p>
-              <button className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white hover:bg-red-600">
+              <button
+                onClick={() => {
+                  if (!p) return;
+                  const message = encodeURIComponent(`Hello Expert Vakeel Support,\n\nI want to report a profile for violation of community guidelines:\n- Lawyer Name: ${p.name}\n- Lawyer ID: ${p.id}\n- Profile URL: ${window.location.href}`);
+                  window.open(`https://wa.me/919968739968?text=${message}`, "_blank");
+                }}
+                className="rounded-full bg-red-500 px-6 py-2 text-sm font-semibold text-white hover:bg-red-600 transition"
+              >
                 Submit Report
               </button>
             </div>
@@ -588,7 +658,15 @@ export default function ProfileView() {
                 onClick={() => navigate(`/profileview?id=${sp.id}`)}
               >
                 <div className="rounded-2xl bg-white p-4 shadow-sm border border-gray-100 group-hover:shadow-md transition">
-                  <img src={sp.avatar} className="h-16 w-16 rounded-full mx-auto mb-3" />
+                  <div className="flex h-16 w-16 mx-auto mb-3 items-center justify-center overflow-hidden rounded-full shadow-sm bg-gradient-to-br from-[#1a365d] to-[#2a4a7d]">
+                    {sp.avatar && !sp.avatar.includes("default-avatar.png") ? (
+                      <img src={sp.avatar} alt={sp.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-lg font-black text-white">
+                        {sp.name?.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-sm font-bold text-center truncate">{sp.name}</h3>
                   <div className="flex justify-center items-center gap-1 mt-1">
                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />

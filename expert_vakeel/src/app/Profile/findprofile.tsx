@@ -19,7 +19,7 @@ function Footer() {
   return (
     <footer className="mt-16 border-t">
       <div className="mx-auto max-w-7xl px-4 py-10 text-sm text-gray-600">
-        © {new Date().getFullYear()} Legal Network · All rights reserved.
+        © {new Date().getFullYear()} Expert Vakeel · Developed By <a href="https://www.digontom.com/" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:underline">Digontom</a>
       </div>
     </footer>
   );

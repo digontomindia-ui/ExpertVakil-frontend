@@ -164,14 +164,14 @@ export default function Header() {
                 to="/blogs"
                 className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
               >
-                Blog
+                Legal News
               </Link>
 
               <Link
                 to="/login"
                 className="text-sm font-medium text-gray-700 hover:text-[#FFA800] transition-colors"
               >
-                Login / Register
+                Lawyer Login / Register
               </Link>
             </nav>
           </div>
@@ -268,7 +268,7 @@ export default function Header() {
               onClick={() => setOpen(false)}
               className="block w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FFA800] transition-colors"
             >
-              Blog
+              Legal News
             </Link>
 
             {/* Login / Register */}
@@ -277,7 +277,7 @@ export default function Header() {
               onClick={() => setOpen(false)}
               className="block w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FFA800] transition-colors"
             >
-              Login / Register
+              Lawyer Login / Register
             </Link>
 
 

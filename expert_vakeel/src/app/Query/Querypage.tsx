@@ -312,23 +312,24 @@ export default function QueryPage() {
 
   // Filter queries for category-specific view using regex
   const filteredCategoryQueries = useMemo(() => {
-    if (selectedCategory && user) {
+    if (selectedCategory) {
       const categoryPatterns = CATEGORY_PATTERNS[selectedCategory as keyof typeof CATEGORY_PATTERNS] || [];
 
-      const result = myQueries.filter((q: Question) => {
-        // First check if user owns this query
-        const isUserQuery = q.askedById === user.id || q.askedById === user._id;
-        if (!isUserQuery) return false;
+      return myQueries.filter((q: Question) => {
+        // If filtering for "my" queries, check ownership
+        if (userFilter === "my") {
+          if (!user) return false;
+          const isUserQuery = q.askedById === user.id || q.askedById === user._id;
+          if (!isUserQuery) return false;
+        }
 
-        // Then check if query matches category regex patterns
+        // Check if query matches category regex patterns
         const combined = `${q.title || ''} ${q.content || ''}`;
         return categoryPatterns.some((pattern: RegExp) => pattern.test(combined));
       });
-
-      return result;
     }
     return [];
-  }, [myQueries, selectedCategory, user]);
+  }, [myQueries, selectedCategory, user, userFilter]);
 
   // Group queries by category for display using regex filtering
   const queriesByCategory = useMemo(() => {
@@ -364,10 +365,12 @@ export default function QueryPage() {
 
   // Handle category view button clicks
   const handleViewCategory = (category: string) => {
-    if (!user) return;
-
     setSelectedCategory(category);
     setShowingMyCategoryQueries(true);
+    // Scroll to the results section smoothly
+    setTimeout(() => {
+      window.scrollTo({ top: 800, behavior: 'smooth' });
+    }, 100);
   };
 
   // Handle back to main view
@@ -914,10 +917,10 @@ export default function QueryPage() {
             <div className="mb-5 flex items-center justify-between">
               <div>
                 <h3 className="text-[22px] font-semibold text-gray-900">
-                  My {CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory} Queries
+                  {CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory} Queries
                 </h3>
                 <p className="mt-1 text-[13px] text-gray-500">
-                  Your queries in the {CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory} category
+                  Showing queries in the {CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory} category
                 </p>
               </div>
 
@@ -932,7 +935,7 @@ export default function QueryPage() {
             {filteredCategoryQueries.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-600">
-                  You haven't posted any {CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory} queries.
+                  No {CATEGORIES.find(c => c.value === selectedCategory)?.label || selectedCategory} queries found.
                 </p>
               </div>
             ) : (

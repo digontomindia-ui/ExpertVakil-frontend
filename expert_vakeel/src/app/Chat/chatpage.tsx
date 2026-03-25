@@ -328,7 +328,8 @@ export default function ChatPage() {
     );
   }
 
-  // Show guest state if not authenticated
+  // Removed guest state guard to support public visibility as requested
+  /* 
   if (!isAuthenticated || !user) {
     return (
       <main className="min-h-[100dvh] bg-gradient-to-b from-white to-slate-50 flex items-center justify-center p-4">
@@ -336,20 +337,21 @@ export default function ChatPage() {
           <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-600 shadow-inner">
             <MessageCircle className="h-10 w-10" />
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-gray-900 tracking-tight">Login Required</h2>
+          <h2 className="mb-2 text-2xl font-bold text-gray-900 tracking-tight">Lawyer Login Required</h2>
           <p className="mb-8 text-sm text-gray-500 leading-relaxed">
-            Please login or register to access your chat history and connect with legal experts directly.
+            Please login or register to access your account or connect with legal experts directly.
           </p>
           <button
             onClick={() => navigate("/login")}
             className="w-full rounded-full bg-black py-4 text-sm font-semibold text-white shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
-            Login / Register
+            Lawyer Login / Register
           </button>
         </div>
       </main>
     );
   }
+  */
 
   // Helper function to get the other user's ID (not the current user)
   const getOtherUserId = (conversation: any): string => {
