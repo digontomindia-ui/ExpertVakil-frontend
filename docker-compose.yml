@@ -1,16 +1,4 @@
 services:
-  # Backend API
-  api:
-    build: ../ExpertVakeel-Backend
-    container_name: expert_api
-    command: npm start
-    ports:
-      - "4000:4000"
-    env_file: ../ExpertVakeel-Backend/.env
-    restart: always
-    networks:
-      - expert-network
-
   # User Frontend (Expert Vakeel)
   user:
     build: ./expert_vakeel
@@ -23,8 +11,6 @@ services:
     restart: always
     networks:
       - expert-network
-    depends_on:
-      - api
 
   # Admin Portal
   admin:
@@ -38,8 +24,6 @@ services:
     restart: always
     networks:
       - expert-network
-    depends_on:
-      - api
 
 networks:
   expert-network:
