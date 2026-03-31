@@ -18,6 +18,7 @@ import MyBookings from "../app/Service/MyBookings";
 import PrivacyPolicyLegalNetwork from "../app/Privacy/Privacy";
 import NewsPage from "../app/News/NewsPage";
 import ChallanStatus from "../app/Challan/ChallanStatus";
+import CheckoutPage from "../app/Checkout/CheckoutPage";
 
 
 export default function AppRoutes() {
@@ -41,6 +42,7 @@ export default function AppRoutes() {
       <Route path="/privacypolicy" element={<PrivacyPolicyLegalNetwork />} />
       <Route path="/legal-news" element={<NewsPage />} />
       <Route path="/challan-status" element={<ChallanStatus />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
     </Routes>
   );
 }

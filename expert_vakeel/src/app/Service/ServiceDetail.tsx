@@ -195,23 +195,6 @@ export default function ServiceDetail() {
   const [searchingChallan, setSearchingChallan] = useState(false);  // Results State
   const [selectedChallanIds, setSelectedChallanIds] = useState<string[]>([]);
   const [isPledged, setIsPledged] = useState(false);
-  const [showPaymentSummary, setShowPaymentSummary] = useState(false);
-  const [pledgeRewardPercentage, setPledgeRewardPercentage] = useState(40); // Admin-controllable
-  // Fetch pledge reward percentage from admin settings
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await api.get("/api/settings/pledgeRewardPercentage");
-        if (response.data.success && response.data.data) {
-          setPledgeRewardPercentage(Number(response.data.data.value));
-        }
-      } catch (err) {
-        console.log("Using default reward percentage (40%)");
-      }
-    };
-    fetchSettings();
-  }, []);
-
   // Traffic Challan specific state
   const [challanData, setChallanData] = useState<ProcessedChallanData | null>(null);
   const [challanError, setChallanError] = useState<string | null>(null);
@@ -526,81 +509,6 @@ export default function ServiceDetail() {
     }
   };
 
-  const handlePayment = async (amount: number, challanNumber: string) => {
-    try {
-      setSearchingChallan(true);
-      const name = formName || "User";
-      const phone = formMobile || "";
-      const city = formCity || "Online";
-
-      const orderRes = await api.post("/api/challan/create-order", {
-        amount,
-        vehicleNumber: vehicleNumber.toUpperCase(),
-        challanNumber,
-        name,
-        phone,
-        city
-      });
-
-      if (orderRes.data.success) {
-        const options = {
-          key: orderRes.data.keyId, 
-          amount: orderRes.data.order.amount,
-          currency: "INR",
-          name: "Expert Vakeel",
-          description: `Challan Payment - ${challanNumber}`,
-          order_id: orderRes.data.order.id,
-          handler: async (response: any) => {
-            try {
-              const verifyRes = await api.post("/api/challan/verify-payment", {
-                ...response,
-                vehicleNumber: vehicleNumber.toUpperCase(),
-                challanNumber,
-                amount,
-                name,
-                phone,
-                city
-              });
-
-              if (verifyRes.data.success) {
-                const paidIds = challanNumber.split(', ');
-                setChallanData(prev => {
-                  if (!prev) return prev;
-                  return {
-                    ...prev,
-                    pendingChallans: prev.pendingChallans.filter(c => !paidIds.includes(c.id) && !paidIds.includes(c.challanNumber)),
-                    totalPending: prev.totalPending - amount
-                  };
-                });
-                setSelectedChallanIds([]);
-                setShowPaymentSummary(false);
-                alert("Payment successful! Challan status updated.");
-              }
-            } catch (err) {
-              console.error("Verification failed:", err);
-              alert("Payment verification failed. Please contact support.");
-            }
-          },
-          prefill: {
-            name: name,
-            email: `${phone}@expertvakeel.com`,
-            contact: phone
-          },
-          theme: {
-            color: "#1a365d"
-          }
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-      }
-    } catch (err: any) {
-      console.error("Payment error:", err);
-      setChallanError("Failed to initiate payment");
-    } finally {
-      setSearchingChallan(false);
-    }
-  };
 
   // Challan Search - MODIFIED TO HANDLE VERIFICATION
   const handleSearchChallan = async () => {
@@ -1102,7 +1010,16 @@ export default function ServiceDetail() {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => setShowPaymentSummary(true)}
+                                onClick={() => navigate("/checkout", { 
+                                  state: { 
+                                    challanData, 
+                                    selectedChallanIds, 
+                                    isPledged: false,
+                                    name: formName,
+                                    phone: formMobile,
+                                    city: formCity
+                                  } 
+                                })}
                                 className="px-8 h-14 bg-[#0097B2] hover:bg-[#00ADC8] text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-cyan-100 transition-all active:scale-95 whitespace-nowrap"
                               >
                                 Proceed To Pay <ArrowRight size={18} />
@@ -1539,174 +1456,6 @@ export default function ServiceDetail() {
         </div>
       </section>
       
-      {/* PRO-PAYMENT MODAL / SUMMARY VIEW */}
-      {showPaymentSummary && challanData && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 overflow-y-auto pt-16 md:pt-36 pb-10">
-          <div className="fixed inset-0 bg-[#0f172a]/90 backdrop-blur-md" onClick={() => setShowPaymentSummary(false)} />
-
-          <div className="relative w-full max-w-4xl bg-[#F0F4F8] rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300">
-            {/* Header */}
-            <div className="bg-white px-8 py-8 flex items-center justify-between border-b border-gray-100">
-              <button onClick={() => setShowPaymentSummary(false)} className="flex items-center gap-2 text-gray-500 font-black text-[10px] uppercase tracking-widest hover:text-gray-900 transition-colors">
-                <ArrowLeft size={14} strokeWidth={3} /> Payment Summary
-              </button>
-              <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-3xl border border-gray-100">
-                <div className="w-8 h-8 bg-blue-100 rounded-3xl flex items-center justify-center text-blue-600">
-                  <Car size={16} strokeWidth={3} />
-                </div>
-                <span className="font-mono font-black text-gray-900 tracking-widest text-xs">{vehicleNumber}</span>
-              </div>
-            </div>
-
-            <div className="flex flex-col lg:flex-row">
-              {/* Left Side: Options */}
-              <div className="flex-1 p-6 lg:p-12 space-y-6 lg:space-y-10">
-                <div className="space-y-2">
-                  <h3 className="text-xl lg:text-2xl font-black text-gray-900 leading-tight">Final Settlement</h3>
-                  <p className="text-[10px] lg:text-sm font-bold text-gray-400 uppercase tracking-[0.2em]">Select your method</p>
-                </div>
-
-                <div className="space-y-4 lg:space-y-8 animate-in slide-in-from-left-4 duration-500">
-                    <div
-                      onClick={() => setIsPledged(!isPledged)}
-                      className={`group relative overflow-hidden rounded-xl p-6 lg:p-8 border-2 transition-all duration-500 cursor-pointer ${isPledged ? "bg-gradient-to-br from-green-500 to-emerald-600 border-green-400 shadow-2xl shadow-green-200" : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-900/5"}`}
-                    >
-                      {/* Background Micro-elements */}
-                      <div className="absolute -right-4 -top-4 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-                      <div className="absolute -left-4 -bottom-4 w-32 h-32 bg-black/5 rounded-full blur-2xl" />
-
-                      <div className="relative z-10 flex items-start justify-between">
-                        <div className="space-y-4">
-                          <div className={`w-14 h-14 rounded-3xl flex items-center justify-center transition-all duration-500 ${isPledged ? "bg-white/20 text-white rotate-12 scale-110" : "bg-blue-50 text-blue-600"}`}>
-                            <ShieldCheck size={28} strokeWidth={2.5} />
-                          </div>
-                          <div>
-                            <h4 className={`text-xl font-black mb-1 transition-colors ${isPledged ? "text-white" : "text-gray-900"}`}>Pledge to Drive Safely</h4>
-                            <p className={`text-xs font-bold leading-relaxed transition-colors ${isPledged ? "text-green-50" : "text-gray-500"}`}>Commit to zero traffic violations for 1 year<br />and unlock instant settlement rewards.</p>
-                          </div>
-                        </div>
-
-                        <div className={`flex flex-col items-center gap-2 transition-all duration-500 ${isPledged ? "translate-x-0 opacity-100" : "translate-x-4 opacity-70"}`}>
-                          <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${isPledged ? "bg-white border-white text-green-600" : "border-gray-200"}`}>
-                            {isPledged && <Check size={18} strokeWidth={4} />}
-                          </div>
-                          <span className={`text-[10px] font-black uppercase tracking-widest ${isPledged ? "text-white" : "text-gray-400"}`}>{isPledged ? "Applied!" : "Claim"}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2 lg:gap-4">
-                      {["Instant Benefit", "Court-Free", "Clean Record"].map((perk, i) => (
-                        <div key={i} className="bg-white/60 backdrop-blur-sm p-3 lg:p-4 rounded-xl border border-white flex flex-col items-center text-center gap-1.5 lg:gap-2">
-                          <div className="w-1.5 lg:w-2 h-1.5 lg:h-2 rounded-full bg-blue-500" />
-                          <span className="text-[8px] lg:text-[9px] font-black text-gray-500 uppercase tracking-wider lg:tracking-widest leading-none">{perk}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-              </div>
-
-              {/* Right Side: Checkout Summary */}
-              <div className="w-full lg:w-[420px] bg-white lg:border-l border-gray-100 p-6 lg:p-12 flex flex-col shadow-[-20px_0_40px_rgba(0,0,0,0.02)]">
-                <div className="flex-1">
-                  <h4 className="text-[10px] lg:text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6 lg:mb-10 flex items-center justify-between">
-                    Review Settlement
-                    <span className="text-[8px] lg:text-[9px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100">{selectedChallanIds.length} ITEMS</span>
-                  </h4>
-
-                  <div className="space-y-4 lg:space-y-6 mb-8 lg:mb-12">
-                    <div className="flex justify-between items-center group">
-                      <div className="flex items-center gap-2">
-                        <span className="text-gray-500 font-black text-sm uppercase tracking-tighter">Online Challan</span>
-                      </div>
-                      <span className="text-gray-900 font-black text-lg">₹{challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0).toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-500 font-black text-sm uppercase tracking-tighter">Convenience Fee</span>
-                      <span className="text-gray-900 font-black text-lg">₹{(selectedChallanIds.length * 200).toLocaleString()}</span>
-                    </div>
-
-                    <div className="pt-6 border-t border-gray-50 flex justify-between items-center">
-                      <span className="text-gray-900 font-black uppercase tracking-[0.2em] text-[10px]">Total Selection</span>
-                      <span className="text-gray-900 font-black text-2xl">₹{(
-                        challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) +
-                        (selectedChallanIds.length * 200)
-                      ).toLocaleString()}</span>
-                    </div>
-
-                    {isPledged && (
-                      <div className="pt-6 animate-in slide-in-from-top-4 duration-500">
-                        <div className="flex justify-between items-center text-blue-600 font-black py-5 px-6 bg-blue-50/80 rounded-xl border border-blue-100 relative overflow-hidden group">
-                          <div className="absolute top-0 right-0 w-12 h-12 bg-blue-100 rotate-45 translate-x-6 -translate-y-6 transition-transform group-hover:scale-150" />
-                          <div className="relative z-10">
-                            <p className="text-[10px] uppercase tracking-widest mb-1 opacity-60">Pledge Reward</p>
-                            <p className="text-2xl font-black">-₹{(challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) * (pledgeRewardPercentage / 100)).toLocaleString()}</p>
-                          </div>
-                          <Star className="w-8 h-8 opacity-10 absolute left-4 top-1/2 -translate-y-1/2 rotate-12" />
-                        </div>
-                        <div className="mt-4 flex items-center gap-3 px-5 py-4 bg-green-50 rounded-xl border border-green-100 shadow-sm shadow-green-900/5">
-                          <div className="w-8 h-8 bg-green-500 text-white rounded-lg flex items-center justify-center shadow-lg shadow-green-200 shrink-0">
-                            <CheckCircle2 size={16} strokeWidth={3} />
-                          </div>
-                          <p className="text-[11px] font-black text-green-700 leading-tight uppercase">YOU SAVED ₹{(challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) * (pledgeRewardPercentage / 100)).toLocaleString()} BY PLEDGING!</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="pt-8 border-t border-gray-100 space-y-6">
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1">Final Payment</span>
-                      <span className="text-4xl font-black text-gray-900">₹{(
-                        (
-                          challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) +
-                          (selectedChallanIds.length * 200)
-                        ) - (isPledged ? (challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0) * (pledgeRewardPercentage / 100)) : 0)
-                      ).toLocaleString()}</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest leading-none mb-1">Tax Inclusive</p>
-                      <p className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">Instant Receipt</p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const totalSelectionAmount = challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0);
-                      const fees = selectedChallanIds.length * 200;
-                      const reward = isPledged ? (totalSelectionAmount * (pledgeRewardPercentage / 100)) : 0;
-                      const finalTotal = (totalSelectionAmount + fees) - reward;
-                      handlePayment(finalTotal, selectedChallanIds.join(', '));
-                    }}
-                    className="w-full h-18 bg-[#0097B2] hover:bg-[#00ADC8] text-white rounded-[28px] text-[20px] font-black shadow-2xl shadow-cyan-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-4 group"
-                  >
-                    Proceed To Pay <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" strokeWidth={3} />
-                  </button>
-
-                  <div className="flex items-center justify-center gap-6 pt-2">
-                    <div className="flex flex-col items-center gap-1 opacity-30">
-                      <ShieldCheck size={14} />
-                      <span className="text-[7px] font-black uppercase tracking-widest">Secure</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 opacity-30">
-                      <CheckCircle2 size={14} />
-                      <span className="text-[7px] font-black uppercase tracking-widest">Verified</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-1 opacity-30">
-                      <User size={14} />
-                      <span className="text-[7px] font-black uppercase tracking-widest">Private</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
