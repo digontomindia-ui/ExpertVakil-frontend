@@ -345,33 +345,32 @@ export default function ChallanStatus() {
             const challanPayload = challanRes.data.data;
 
             if (challanPayload.statusCode === 200 && Array.isArray(challanPayload.data)) {
-                const pendingChallans = challanPayload.data.filter(
-                    (c: ChallanItem) => c.challanStatus.toLowerCase() === "pending",
-                );
-
-                const processedChallans = pendingChallans.map((c: ChallanItem) => ({
+                const processedChallans = challanPayload.data.map((c: ChallanItem) => ({
                     id: c.challanId.toString(),
                     challanNumber: c.challanNumber,
                     date: c.challanDate,
                     location: c.challanPlace,
                     violation: c.offences.map((o) => o.offence_name).join(", "),
                     amount: parseInt(c.challanAmount) || 0,
-                    status: c.challanStatus,
+                    status: c.challanStatus.toLowerCase(),
                     offences: c.offences,
                     challanPlace: c.challanPlace,
                     accusedName: c.accusedName,
                 }));
 
-                const totalPending = processedChallans.reduce((sum: number, c: any) => sum + c.amount, 0);
+                const totalPending = processedChallans
+                    .filter(c => c.status === "pending")
+                    .reduce((sum: number, c: any) => sum + c.amount, 0);
 
                 const newChallanData = {
                     vehicleNumber: vehicleNumber.toUpperCase(),
                     ownerName: challanPayload.data[0]?.accusedName || "Not Available",
-                    pendingChallans: processedChallans,
+                    pendingChallans: processedChallans, // Using this array name for compatibility
                     totalPending,
                 };
                 setChallanData(newChallanData);
-                setSelectedChallanIds(newChallanData.pendingChallans.map(c => c.challanNumber));
+                // Only select pending ones by default
+                setSelectedChallanIds(newChallanData.pendingChallans.filter(c => c.status === "pending").map(c => c.challanNumber));
 
                 // 4. Create Lead for records
                 await serviceBookedAPI.create({
@@ -658,15 +657,16 @@ export default function ChallanStatus() {
                                         <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Challan Details</h4>
                                         <button
                                             onClick={() => {
-                                                if (selectedChallanIds.length === challanData.pendingChallans.length) {
+                                                const pendingOnly = challanData.pendingChallans.filter(c => c.status === "pending");
+                                                if (selectedChallanIds.length === pendingOnly.length) {
                                                     setSelectedChallanIds([]);
                                                 } else {
-                                                    setSelectedChallanIds(challanData.pendingChallans.map(c => c.challanNumber));
+                                                    setSelectedChallanIds(pendingOnly.map(c => c.challanNumber));
                                                 }
                                             }}
                                             className="text-[10px] font-black text-[#1a365d] uppercase tracking-widest hover:underline"
                                         >
-                                            {selectedChallanIds.length === challanData.pendingChallans.length ? "Deselect All" : "Select All"}
+                                            {selectedChallanIds.length === challanData.pendingChallans.filter(c => c.status === "pending").length ? "Deselect All" : "Select All"}
                                         </button>
                                     </div>
 
@@ -676,28 +676,42 @@ export default function ChallanStatus() {
                                                 <div
                                                     key={i}
                                                     onClick={() => {
+                                                        if (c.status !== "pending") return;
                                                         setSelectedChallanIds(prev =>
                                                             prev.includes(c.challanNumber)
                                                                 ? prev.filter(id => id !== c.challanNumber)
                                                                 : [...prev, c.challanNumber]
                                                         );
                                                     }}
-                                                    className={`group relative bg-white border rounded-xl p-6 transition-all duration-300 cursor-pointer ${selectedChallanIds.includes(c.challanNumber) ? "border-blue-500 shadow-xl shadow-blue-500/5 ring-4 ring-blue-50" : "border-gray-100 hover:shadow-lg hover:shadow-blue-900/5"}`}
+                                                    className={`group relative bg-white border rounded-xl p-6 transition-all duration-300 ${c.status === "pending"
+                                                        ? selectedChallanIds.includes(c.challanNumber)
+                                                            ? "border-blue-500 shadow-xl shadow-blue-500/5 ring-4 ring-blue-50 cursor-pointer"
+                                                            : "border-gray-100 hover:shadow-lg hover:shadow-blue-900/5 cursor-pointer"
+                                                        : "opacity-70 bg-gray-50/50 border-gray-100 cursor-default"}`}
                                                 >
                                                     <div className="flex justify-between items-start mb-4">
                                                         <div className="flex items-center gap-4">
-                                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedChallanIds.includes(c.challanNumber) ? "bg-blue-500 border-blue-500 text-white" : "border-gray-200 bg-white"}`}>
-                                                                {selectedChallanIds.includes(c.challanNumber) && <Check className="w-4 h-4 stroke-[4]" />}
-                                                            </div>
+                                                            {c.status === "pending" ? (
+                                                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedChallanIds.includes(c.challanNumber) ? "bg-blue-500 border-blue-500 text-white" : "border-gray-200 bg-white"}`}>
+                                                                    {selectedChallanIds.includes(c.challanNumber) && <Check className="w-4 h-4 stroke-[4]" />}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-6 h-6 rounded-lg bg-green-500 text-white flex items-center justify-center shadow-sm">
+                                                                    <CheckCircle2 className="w-4 h-4 stroke-[3]" />
+                                                                </div>
+                                                            )}
                                                             <div className="bg-gray-50 px-3 py-1.5 rounded-3xl border border-gray-100">
                                                                 <span className="text-[11px] font-bold text-gray-500 font-mono tracking-wider">{c.challanNumber}</span>
                                                             </div>
+                                                            {c.status !== "pending" && (
+                                                                <span className="bg-green-100 text-green-700 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">Paid</span>
+                                                            )}
                                                         </div>
-                                                        <span className="text-xl font-black text-red-600">₹{c.amount}</span>
+                                                        <span className={`text-xl font-black ${c.status === "pending" ? "text-red-600" : "text-gray-400 line-through"}`}>₹{c.amount}</span>
                                                     </div>
-                                                    <h4 className="font-extrabold text-gray-900 text-lg mb-3 leading-tight">{c.violation}</h4>
+                                                    <h4 className={`font-extrabold text-lg mb-3 leading-tight ${c.status === "pending" ? "text-gray-900" : "text-gray-500"}`}>{c.violation}</h4>
                                                     {c.offences?.[0]?.motor_vehicle_act && (
-                                                        <p className="text-[10px] font-bold text-blue-600/60 uppercase tracking-widest -mt-2 mb-3">
+                                                        <p className={`text-[10px] font-bold uppercase tracking-widest -mt-2 mb-3 ${c.status === "pending" ? "text-blue-600/60" : "text-gray-400"}`}>
                                                             {c.offences[0].motor_vehicle_act}
                                                         </p>
                                                     )}
