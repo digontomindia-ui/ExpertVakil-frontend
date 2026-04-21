@@ -185,7 +185,7 @@ export default function QuickAccessGrid() {
     };
 
     const items = [
-        { label: "Legal Matters", localIcon: "/assets/services_logo/p11.png", path: "/services" },
+        // { label: "Legal Matters", localIcon: "/assets/services_logo/p11.png", path: "/services" },
         { label: "Marriage Registration", localIcon: "/assets/services_logo/p1.png", path: "/services" },
         { label: "Civil Disputes", localIcon: "/assets/services_logo/p2.png", path: "/services" },
         { label: "Business & Contracts", localIcon: "/assets/services_logo/p3.png", path: "/services" },

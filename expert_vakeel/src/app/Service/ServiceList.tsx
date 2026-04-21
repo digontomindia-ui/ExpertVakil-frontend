@@ -202,7 +202,7 @@ export default function ServiceList() {
   };
 
   const serviceIconMap: Record<string, string> = {
-    "Legal Matters": "/assets/services_logo/p11.png",
+    // "Legal Matters": "/assets/services_logo/p11.png",
     "Marriage Registration": "/assets/services_logo/p1.png",
     "Civil Disputes": "/assets/services_logo/p2.png",
     "Business & Contracts": "/assets/services_logo/p3.png",
