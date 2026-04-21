@@ -696,6 +696,11 @@ export default function ChallanStatus() {
                                                         <span className="text-xl font-black text-red-600">₹{c.amount}</span>
                                                     </div>
                                                     <h4 className="font-extrabold text-gray-900 text-lg mb-3 leading-tight">{c.violation}</h4>
+                                                    {c.offences?.[0]?.motor_vehicle_act && (
+                                                        <p className="text-[10px] font-bold text-blue-600/60 uppercase tracking-widest -mt-2 mb-3">
+                                                            {c.offences[0].motor_vehicle_act}
+                                                        </p>
+                                                    )}
                                                     <div className="flex flex-wrap gap-4">
                                                         <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
                                                             <CalendarDays className="w-4 h-4 text-blue-500" /> {c.date}
