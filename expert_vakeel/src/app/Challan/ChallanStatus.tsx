@@ -335,41 +335,79 @@ export default function ChallanStatus() {
                 return;
             }
 
-            // 3. Fetch Challan (Real API)
-            const challanRes = await challanAPI.search(
-                vehicleNumber.toUpperCase(),
-                `${phone}@expertvakeel.com`,
-                phone
-            );
+            // 3. Fetch Challan (Rapid API Integration)
+            let processedChallans: any[] = [];
+            let totalPending = 0;
+            let ownerName = "Not Available";
 
-            const challanPayload = challanRes.data.data;
+            try {
+                const challanRes = await challanAPI.searchRapid(vehicleNumber.toUpperCase());
+                const rapidData = challanRes.data;
 
-            if (challanPayload.statusCode === 200 && Array.isArray(challanPayload.data)) {
-                const processedChallans = challanPayload.data.map((c: ChallanItem) => ({
-                    id: c.challanId.toString(),
-                    challanNumber: c.challanNumber,
-                    date: c.challanDate,
-                    location: c.challanPlace,
-                    violation: c.offences.map((o) => o.offence_name).join(", "),
-                    amount: parseInt(c.challanAmount) || 0,
-                    status: c.challanStatus.toLowerCase(),
-                    offences: c.offences,
-                    challanPlace: c.challanPlace,
-                    accusedName: c.accusedName,
-                }));
+                // Handle RapidAPI response structure
+                // Assuming it might have a 'data' field or be the root object
+                const results = rapidData.data || rapidData.results || (Array.isArray(rapidData) ? rapidData : []);
+                ownerName = rapidData.owner_name || rapidData.ownerName || "Not Available";
 
-                const totalPending = processedChallans
-                    .filter(c => c.status === "pending")
-                    .reduce((sum: number, c: any) => sum + c.amount, 0);
+                if (Array.isArray(results)) {
+                    processedChallans = results.map((c: any) => ({
+                        id: (c.challan_number || c.challanNumber || Math.random()).toString(),
+                        challanNumber: c.challan_number || c.challanNumber || "N/A",
+                        date: c.challan_date || c.date || "N/A",
+                        location: c.challan_place || c.location || "N/A",
+                        violation: c.offence || c.violation || "N/A",
+                        amount: parseInt(c.amount || c.challan_amount) || 0,
+                        status: (c.status || c.challan_status || "pending").toLowerCase(),
+                        offences: c.offences || [{ offence_name: c.offence || "N/A", offence_fine: c.amount || "0", motor_vehicle_act: "" }],
+                        challanPlace: c.challan_place || c.location || "N/A",
+                        accusedName: c.owner_name || c.accusedName || ownerName,
+                    }));
 
+                    totalPending = processedChallans
+                        .filter(c => c.status === "pending")
+                        .reduce((sum: number, c: any) => sum + c.amount, 0);
+                } else {
+                    // Fallback for single object or different structure
+                    console.log("RapidAPI returned non-array result:", rapidData);
+                }
+            } catch (rapidErr) {
+                console.error("RapidAPI Error, falling back to existing API:", rapidErr);
+                // Fallback to original API if RapidAPI fails
+                const challanRes = await challanAPI.search(
+                    vehicleNumber.toUpperCase(),
+                    `${phone}@expertvakeel.com`,
+                    phone
+                );
+                const challanPayload = challanRes.data.data;
+                
+                if (challanPayload.statusCode === 200 && Array.isArray(challanPayload.data)) {
+                    processedChallans = challanPayload.data.map((c: ChallanItem) => ({
+                        id: c.challanId.toString(),
+                        challanNumber: c.challanNumber,
+                        date: c.challanDate,
+                        location: c.challanPlace,
+                        violation: c.offences.map((o) => o.offence_name).join(", "),
+                        amount: parseInt(c.challanAmount) || 0,
+                        status: c.challanStatus.toLowerCase(),
+                        offences: c.offences,
+                        challanPlace: c.challanPlace,
+                        accusedName: c.accusedName,
+                    }));
+                    totalPending = processedChallans
+                        .filter(c => c.status === "pending")
+                        .reduce((sum: number, c: any) => sum + c.amount, 0);
+                    ownerName = challanPayload.data[0]?.accusedName || "Not Available";
+                }
+            }
+
+            if (processedChallans.length > 0) {
                 const newChallanData = {
                     vehicleNumber: vehicleNumber.toUpperCase(),
-                    ownerName: challanPayload.data[0]?.accusedName || "Not Available",
-                    pendingChallans: processedChallans, // Using this array name for compatibility
+                    ownerName: ownerName,
+                    pendingChallans: processedChallans,
                     totalPending,
                 };
                 setChallanData(newChallanData);
-                // Only select pending ones by default
                 setSelectedChallanIds(newChallanData.pendingChallans.filter(c => c.status === "pending").map(c => c.challanNumber));
 
                 // 4. Create Lead for records
@@ -377,13 +415,13 @@ export default function ChallanStatus() {
                     clientId: clientId || "",
                     phoneNumber: phone,
                     title: "Challan Search",
-                    description: `Challan search executed for ${vehicleNumber} by ${name} from ${city}`,
+                    description: `Challan search (RapidAPI) executed for ${vehicleNumber} by ${name} from ${city}`,
                     servicesBooked: ["Traffic Challan Assistance"],
                 });
 
                 setStep(4);
             } else {
-                throw new Error(challanPayload.message || "No challan data found");
+                throw new Error("No challan data found");
             }
         } catch (err: any) {
             setError(err.response?.data?.message || err.message || "Verification failed");

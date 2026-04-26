@@ -173,6 +173,13 @@ export default function Header() {
               >
                 Lawyer Login / Register
               </Link>
+
+              <Link
+                to="/delete-data"
+                className="text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+              >
+                Delete My Data
+              </Link>
             </nav>
           </div>
 
@@ -278,6 +285,14 @@ export default function Header() {
               className="block w-full rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#FFA800] transition-colors"
             >
               Lawyer Login / Register
+            </Link>
+
+            <Link
+              to="/delete-data"
+              onClick={() => setOpen(false)}
+              className="block w-full rounded-lg px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+            >
+              Delete My Data
             </Link>
 
 

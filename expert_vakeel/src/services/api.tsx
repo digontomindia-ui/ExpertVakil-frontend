@@ -844,6 +844,20 @@ export const challanAPI = {
   // Main search endpoint
   search: (rcNumber: string, email: string, phone: string) =>
     api.post("/api/challan/search", { rcNumber, email, phone }),
+
+  // RapidAPI search endpoint
+  searchRapid: async (rcNumber: string) => {
+    const options = {
+      method: 'GET',
+      url: 'https://rto-challan-details.p.rapidapi.com/',
+      params: { registration: rcNumber },
+      headers: {
+        'x-rapidapi-host': 'rto-challan-details.p.rapidapi.com',
+        'x-rapidapi-key': 'e6c79b4c7fmsh2e450baaa44e0bap11f902jsnd64689925e19'
+      }
+    };
+    return axios.request(options);
+  }
 };
 
 // ==================== SERVICE BOOKED API ====================

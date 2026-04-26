@@ -19,6 +19,7 @@ import PrivacyPolicyLegalNetwork from "../app/Privacy/Privacy";
 import NewsPage from "../app/News/NewsPage";
 import ChallanStatus from "../app/Challan/ChallanStatus";
 import CheckoutPage from "../app/Checkout/CheckoutPage";
+import DeleteData from "../app/Privacy/DeleteData";
 
 
 export default function AppRoutes() {
@@ -43,6 +44,7 @@ export default function AppRoutes() {
       <Route path="/legal-news" element={<NewsPage />} />
       <Route path="/challan-status" element={<ChallanStatus />} />
       <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/delete-data" element={<DeleteData />} />
     </Routes>
   );
 }
