@@ -29,4 +29,11 @@
   .tracking-tighter-half {
     letter-spacing: -0.0125em;
   }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

@@ -203,6 +203,29 @@ const DeleteData: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* App Screenshots Gallery */}
+        <div className="mt-24 space-y-8">
+          <div className="text-center space-y-2">
+            <h3 className="text-2xl font-bold text-white">Experience Legal Network on Mobile</h3>
+            <p className="text-slate-400">Discover a faster, more secure way to manage your legal needs.</p>
+          </div>
+          
+          <div className="flex gap-6 overflow-x-auto pb-8 snap-x no-scrollbar">
+            {[1, 2, 3, 4].map((num) => (
+              <div 
+                key={num} 
+                className="flex-none w-64 aspect-[9/19.5] rounded-3xl overflow-hidden border border-white/10 shadow-2xl snap-center bg-slate-800"
+              >
+                <img 
+                  src={`/app/${num}.png`} 
+                  alt={`App Screenshot ${num}`}
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
