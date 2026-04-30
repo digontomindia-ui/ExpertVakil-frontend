@@ -43,7 +43,6 @@ const COLUMNS: Column[] = [
       { label: "Blogs", to: "/blogs" },
       { label: "FAQs", to: "/support" },
       { label: "All Services", to: "/services" },
-      { label: "Delete My Data", to: "/delete-data" },
       { label: "Download Our App For Lawyers", href: "#", external: false }
     ]
   },

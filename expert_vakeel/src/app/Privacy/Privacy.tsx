@@ -12,7 +12,7 @@ type Props = {
 export default function PrivacyPolicyLegalNetwork({
     companyName = "Legal Network",
     lastUpdated = "4th December 2025",
-    contactEmail = "official.legalnetwork@gmail.com",
+    contactEmail = "info@expertvakeel.in",
     website = "https://legalnetwork.in",
 }: Props) {
     const navigate = useNavigate();

@@ -33,12 +33,15 @@ const DeleteData: React.FC = () => {
                 <ShieldAlert size={14} />
                 Data Privacy
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">
-                Delete My <span className="text-blue-500">Data</span>
-              </h1>
+              <div className="space-y-1">
+                <p className="text-xs font-bold text-blue-500/80 uppercase tracking-[0.25em] mb-2">Legal Network</p>
+                <h1 className="text-4xl md:text-5xl font-black text-white leading-tight">
+                  Delete My <span className="text-blue-500">Data</span>
+                </h1>
+              </div>
               <p className="text-lg text-slate-400 leading-relaxed">
                 We value your privacy and provide you with full control over your personal information. 
-                Request deletion of your account or specific data associated with your identity.
+                Request deletion of your account or specific data associated with your identity on Legal Network.
               </p>
             </div>
 
@@ -85,15 +88,13 @@ const DeleteData: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                <button className="w-full h-16 bg-white text-slate-900 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5">
+                <a 
+                  href="mailto:info@expertvakeel.in"
+                  className="w-full h-16 bg-white text-slate-900 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-100 transition-all active:scale-[0.98] shadow-lg shadow-white/5"
+                >
                   <Mail size={20} />
                   Continue with Email
-                </button>
-                
-                <button className="w-full h-16 bg-slate-800 text-white border border-slate-700 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-slate-700 transition-all active:scale-[0.98]">
-                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                  Continue with Google
-                </button>
+                </a>
               </div>
 
               <div className="mt-8 pt-8 border-t border-slate-700/50">
@@ -106,14 +107,17 @@ const DeleteData: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-8 text-center">
+            <div className="mt-8 text-center space-y-4">
               <a 
-                href="mailto:support@expertvakeel.com" 
+                href="mailto:info@expertvakeel.in" 
                 className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
               >
                 Need help? Contact Support
                 <ExternalLink size={14} />
               </a>
+              <p className="text-[10px] text-slate-600 uppercase tracking-widest font-medium">
+                © {new Date().getFullYear()} Legal Network • All Rights Reserved
+              </p>
             </div>
           </div>
         </div>
