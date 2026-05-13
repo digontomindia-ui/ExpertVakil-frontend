@@ -20,7 +20,9 @@ import {
     FileText,
     ArrowRight,
     Star,
-    HelpCircle
+    HelpCircle,
+    History,
+    CreditCard
 } from "lucide-react";
 
 // Types from ServiceDetail
