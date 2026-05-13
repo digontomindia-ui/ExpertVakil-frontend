@@ -342,7 +342,7 @@ export interface ErrorResponse {
 
 // Environment configuration
 const getBaseURL = () => {
-  return import.meta.env.VITE_API_URL || "https://api.legalnetwork.in";
+  return import.meta.env.VITE_API_URL || "http://localhost:4000";
 };
 
 const api = axios.create({
@@ -369,7 +369,7 @@ api.interceptors.response.use(
         console.warn('Localhost server not responding, switching to production backend...');
 
         // Update base URL to production
-        api.defaults.baseURL = "https://api.legalnetwork.in";
+        api.defaults.baseURL = "http://localhost:4000";
         originalRequest._retry = true;
 
         // Retry the request with production URL
@@ -848,12 +848,15 @@ export const challanAPI = {
   // RapidAPI search endpoint
   searchRapid: async (rcNumber: string) => {
     const options = {
-      method: 'GET',
-      url: 'https://rto-challan-details.p.rapidapi.com/',
-      params: { registration: rcNumber },
+      method: 'POST',
+      url: 'https://rto-challan-information-india.p.rapidapi.com/',
       headers: {
-        'x-rapidapi-host': 'rto-challan-details.p.rapidapi.com',
-        'x-rapidapi-key': 'e6c79b4c7fmsh2e450baaa44e0bap11f902jsnd64689925e19'
+        'content-type': 'application/json',
+        'x-rapidapi-host': 'rto-challan-information-india.p.rapidapi.com',
+        'x-rapidapi-key': '41d4a6c504msh7c51ebcf7242283p1bb1aejsn8959ab2cea67'
+      },
+      data: {
+        rc_number: rcNumber
       }
     };
     return axios.request(options);

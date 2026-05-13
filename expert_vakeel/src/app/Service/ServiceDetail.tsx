@@ -989,8 +989,8 @@ export default function ServiceDetail() {
                             </div>
                           ))}
                         </div>
-                        ) : null}
-                      </div>
+                      ) : null}
+                    </div>
 
                     {/* Pledge Reward Card In-List */}
                     {challanData.pendingChallans && challanData.pendingChallans.length > 0 && selectedChallanIds.length > 0 && (
@@ -1010,15 +1010,15 @@ export default function ServiceDetail() {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => navigate("/checkout", { 
-                                  state: { 
-                                    challanData, 
-                                    selectedChallanIds, 
+                                onClick={() => navigate("/checkout", {
+                                  state: {
+                                    challanData,
+                                    selectedChallanIds,
                                     isPledged: false,
                                     name: formName,
                                     phone: formMobile,
                                     city: formCity
-                                  } 
+                                  }
                                 })}
                                 className="px-8 h-14 bg-[#0097B2] hover:bg-[#00ADC8] text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-cyan-100 transition-all active:scale-95 whitespace-nowrap"
                               >
@@ -1030,9 +1030,9 @@ export default function ServiceDetail() {
                       </div>
                     )}
                   </div>
-                  ) : null}
-                </div>
-              )}
+                ) : null}
+              </div>
+            )}
 
             {/* Get Expert Help Section */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -1455,7 +1455,7 @@ export default function ServiceDetail() {
           </p>
         </div>
       </section>
-      
+
     </main>
   );
 }

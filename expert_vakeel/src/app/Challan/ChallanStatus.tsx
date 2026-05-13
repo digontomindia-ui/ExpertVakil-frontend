@@ -97,6 +97,7 @@ export default function ChallanStatus() {
     // Results State
     const [challanData, setChallanData] = useState<ProcessedChallanData | null>(null);
     const [selectedChallanIds, setSelectedChallanIds] = useState<string[]>([]);
+    const [activeTab, setActiveTab] = useState<"pending" | "paid">("pending");
     const [isPledged, setIsPledged] = useState(false);
     const [pledgeRewardPercentage, setPledgeRewardPercentage] = useState(40); // Admin-controllable
 
@@ -213,7 +214,7 @@ export default function ChallanStatus() {
 
             if (orderRes.data.success) {
                 const options = {
-                    key: orderRes.data.keyId, 
+                    key: orderRes.data.keyId,
                     amount: orderRes.data.order.amount,
                     currency: "INR",
                     name: "Expert Vakeel",
@@ -346,21 +347,21 @@ export default function ChallanStatus() {
 
                 // Handle RapidAPI response structure
                 // Assuming it might have a 'data' field or be the root object
-                const results = rapidData.data || rapidData.results || (Array.isArray(rapidData) ? rapidData : []);
+                const results = rapidData.result || rapidData.data || rapidData.results || (Array.isArray(rapidData) ? rapidData : []);
                 ownerName = rapidData.owner_name || rapidData.ownerName || "Not Available";
 
                 if (Array.isArray(results)) {
                     processedChallans = results.map((c: any) => ({
-                        id: (c.challan_number || c.challanNumber || Math.random()).toString(),
-                        challanNumber: c.challan_number || c.challanNumber || "N/A",
-                        date: c.challan_date || c.date || "N/A",
+                        id: (c.challan_number || c.challan_no || c.challanNumber || Math.random()).toString(),
+                        challanNumber: c.challan_number || c.challan_no || c.challanNumber || "N/A",
+                        date: c.challan_date || c.challan_date_time || c.date || "N/A",
                         location: c.challan_place || c.location || "N/A",
                         violation: c.offence || c.violation || "N/A",
                         amount: parseInt(c.amount || c.challan_amount) || 0,
                         status: (c.status || c.challan_status || "pending").toLowerCase(),
                         offences: c.offences || [{ offence_name: c.offence || "N/A", offence_fine: c.amount || "0", motor_vehicle_act: "" }],
                         challanPlace: c.challan_place || c.location || "N/A",
-                        accusedName: c.owner_name || c.accusedName || ownerName,
+                        accusedName: c.owner_name || c.accused_name || c.accusedName || ownerName,
                     }));
 
                     totalPending = processedChallans
@@ -379,7 +380,7 @@ export default function ChallanStatus() {
                     phone
                 );
                 const challanPayload = challanRes.data.data;
-                
+
                 if (challanPayload.statusCode === 200 && Array.isArray(challanPayload.data)) {
                     processedChallans = challanPayload.data.map((c: ChallanItem) => ({
                         id: c.challanId.toString(),
@@ -485,8 +486,8 @@ export default function ChallanStatus() {
                 </div>
             </div>
 
-            <div className="max-w-xl mx-auto -mt-24 px-4 pb-20 relative z-20">
-                <div className="bg-white rounded-[40px] shadow-2xl shadow-blue-900/40 border border-white/10 overflow-hidden">
+            <div className={`${step === 4 ? "max-w-7xl mx-auto px-4 pb-20 relative z-20" : "max-w-xl mx-auto -mt-24 px-4 pb-20 relative z-20"}`}>
+                <div className={`${step === 4 ? "" : "bg-white rounded-[40px] shadow-2xl shadow-blue-900/40 border border-white/10 overflow-hidden"}`}>
 
 
 
@@ -676,41 +677,96 @@ export default function ChallanStatus() {
                         )}
 
                         {step === 4 && challanData && (
-                            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                                <div className="bg-gradient-to-br from-[#1a365d] to-[#0f172a] rounded-xl p-8 text-white shadow-2xl shadow-blue-900/20">
-                                    <div className="flex justify-between items-start mb-6">
-                                        <div className="space-y-1">
-                                            <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest">Registered Owner</p>
-                                            <h4 className="text-xl font-black">{challanData.ownerName}</h4>
+                            <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in slide-in-from-bottom-8 duration-700 -mt-32">
+                                {/* Sidebar */}
+                                <div className="lg:w-1/4 space-y-4">
+                                    {/* Vehicle Card */}
+                                    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h4 className="text-lg font-black text-gray-900 tracking-tight">{challanData.vehicleNumber}</h4>
+                                            <button 
+                                                onClick={() => setStep(1)}
+                                                className="text-xs font-bold text-orange-500 hover:underline flex items-center gap-1"
+                                            >
+                                                Change <ArrowRight className="w-3 h-3" />
+                                            </button>
                                         </div>
-                                        <div className="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
-                                            <p className="text-[10px] text-blue-200 font-bold uppercase tracking-wider mb-0.5">Vehicle</p>
-                                            <p className="font-mono font-bold text-sm tracking-widest">{challanData.vehicleNumber}</p>
+                                        <div className="h-px bg-gray-100 w-full mb-6"></div>
+                                        <div className="space-y-3">
+                                            <button
+                                                onClick={() => setActiveTab("pending")}
+                                                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all font-black text-sm ${activeTab === "pending" ? "bg-orange-50 text-orange-600 border border-orange-100" : "text-gray-600 hover:bg-gray-50"}`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    Pending Challans
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === "pending" ? "bg-orange-200 text-orange-700" : "bg-gray-100 text-gray-400"}`}>
+                                                        {challanData.pendingChallans.filter(c => c.status === "pending").length}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab("paid")}
+                                                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all font-black text-sm ${activeTab === "paid" ? "bg-orange-50 text-orange-600 border border-orange-100" : "text-gray-600 hover:bg-gray-50"}`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    Paid Challans
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === "paid" ? "bg-orange-200 text-orange-700" : "bg-gray-100 text-gray-400"}`}>
+                                                        {challanData.pendingChallans.filter(c => c.status !== "pending").length}
+                                                    </span>
+                                                </div>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    <div className="flex items-center justify-between ml-1">
-                                        <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em]">Challan Details</h4>
-                                        <button
-                                            onClick={() => {
-                                                const pendingOnly = challanData.pendingChallans.filter(c => c.status === "pending");
-                                                if (selectedChallanIds.length === pendingOnly.length) {
-                                                    setSelectedChallanIds([]);
-                                                } else {
-                                                    setSelectedChallanIds(pendingOnly.map(c => c.challanNumber));
-                                                }
-                                            }}
-                                            className="text-[10px] font-black text-[#1a365d] uppercase tracking-widest hover:underline"
-                                        >
-                                            {selectedChallanIds.length === challanData.pendingChallans.filter(c => c.status === "pending").length ? "Deselect All" : "Select All"}
-                                        </button>
+                                {/* Main Content */}
+                                <div className="flex-1 space-y-6 pb-32">
+                                    {/* Summary Cards */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm text-center flex flex-col items-center">
+                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Payable on Expert Vakeel</p>
+                                            <h3 className="text-3xl font-black text-gray-900 mb-1">{challanData.pendingChallans.filter(c => c.status === "pending").length}</h3>
+                                            <p className="text-sm font-bold text-gray-500">Amount: ₹{challanData.pendingChallans.filter(c => c.status === "pending").reduce((s, c) => s + c.amount, 0).toLocaleString()}</p>
+                                        </div>
+                                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm text-center flex flex-col items-center">
+                                            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1">Payable externally</p>
+                                            <h3 className="text-3xl font-black text-gray-900 mb-1">0</h3>
+                                            <p className="text-sm font-bold text-gray-500">Amount: ₹0</p>
+                                        </div>
                                     </div>
 
-                                    {challanData.pendingChallans.length > 0 ? (
-                                        <div className="space-y-4">
-                                            {challanData.pendingChallans.map((c, i) => (
+                                    {/* Tab Title */}
+                                    <div className="flex items-end justify-between px-1">
+                                        <div>
+                                            <h2 className="text-xl font-black text-gray-900">
+                                                {activeTab === "pending" ? "Payable on Expert Vakeel" : "Recently Paid Challans"}
+                                            </h2>
+                                            <p className="text-xs font-bold text-gray-400 mt-1">
+                                                {activeTab === "pending" ? "Challans that can be settled online on Expert Vakeel" : "Challans that have been successfully cleared"}
+                                            </p>
+                                        </div>
+                                        {activeTab === "pending" && (
+                                            <button
+                                                onClick={() => {
+                                                    const pendingOnly = challanData.pendingChallans.filter(c => c.status === "pending");
+                                                    if (selectedChallanIds.length === pendingOnly.length) {
+                                                        setSelectedChallanIds([]);
+                                                    } else {
+                                                        setSelectedChallanIds(pendingOnly.map(c => c.challanNumber));
+                                                    }
+                                                }}
+                                                className="text-[10px] font-black text-orange-500 uppercase tracking-widest hover:underline"
+                                            >
+                                                {selectedChallanIds.length === challanData.pendingChallans.filter(c => c.status === "pending").length ? "Deselect all" : "Select all"}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Challan Cards List */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {challanData.pendingChallans
+                                            .filter(c => activeTab === "pending" ? c.status === "pending" : c.status !== "pending")
+                                            .map((c, i) => (
                                                 <div
                                                     key={i}
                                                     onClick={() => {
@@ -721,134 +777,116 @@ export default function ChallanStatus() {
                                                                 : [...prev, c.challanNumber]
                                                         );
                                                     }}
-                                                    className={`group relative bg-white border rounded-xl p-6 transition-all duration-300 ${c.status === "pending"
+                                                    className={`group relative bg-white border rounded-3xl p-6 transition-all duration-300 ${c.status === "pending"
                                                         ? selectedChallanIds.includes(c.challanNumber)
                                                             ? "border-blue-500 shadow-xl shadow-blue-500/5 ring-4 ring-blue-50 cursor-pointer"
-                                                            : "border-gray-100 hover:shadow-lg hover:shadow-blue-900/5 cursor-pointer"
-                                                        : "opacity-70 bg-gray-50/50 border-gray-100 cursor-default"}`}
+                                                            : "border-gray-100 hover:shadow-lg cursor-pointer"
+                                                        : "bg-white border-gray-100"}`}
                                                 >
+                                                    {/* Card Header Badge */}
                                                     <div className="flex justify-between items-start mb-4">
-                                                        <div className="flex items-center gap-4">
-                                                            {c.status === "pending" ? (
-                                                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedChallanIds.includes(c.challanNumber) ? "bg-blue-500 border-blue-500 text-white" : "border-gray-200 bg-white"}`}>
-                                                                    {selectedChallanIds.includes(c.challanNumber) && <Check className="w-4 h-4 stroke-[4]" />}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="w-6 h-6 rounded-lg bg-green-500 text-white flex items-center justify-center shadow-sm">
-                                                                    <CheckCircle2 className="w-4 h-4 stroke-[3]" />
-                                                                </div>
-                                                            )}
-                                                            <div className="bg-gray-50 px-3 py-1.5 rounded-3xl border border-gray-100">
-                                                                <span className="text-[11px] font-bold text-gray-500 font-mono tracking-wider">{c.challanNumber}</span>
+                                                        <span className="bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md">
+                                                            {c.offences?.[0]?.motor_vehicle_act ? "Court Challan" : "State Challan"}
+                                                        </span>
+                                                        {c.status === "pending" && (
+                                                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedChallanIds.includes(c.challanNumber) ? "bg-blue-500 border-blue-500 text-white" : "border-gray-200 bg-white"}`}>
+                                                                {selectedChallanIds.includes(c.challanNumber) && <Check className="w-4 h-4 stroke-[4]" />}
                                                             </div>
-                                                            {c.status !== "pending" && (
-                                                                <span className="bg-green-100 text-green-700 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">Paid</span>
-                                                            )}
-                                                        </div>
-                                                        <span className={`text-xl font-black ${c.status === "pending" ? "text-red-600" : "text-gray-400 line-through"}`}>₹{c.amount}</span>
+                                                        )}
                                                     </div>
-                                                    <h4 className={`font-extrabold text-lg mb-3 leading-tight ${c.status === "pending" ? "text-gray-900" : "text-gray-500"}`}>{c.violation}</h4>
-                                                    {c.offences?.[0]?.motor_vehicle_act && (
-                                                        <p className={`text-[10px] font-bold uppercase tracking-widest -mt-2 mb-3 ${c.status === "pending" ? "text-blue-600/60" : "text-gray-400"}`}>
-                                                            {c.offences[0].motor_vehicle_act}
-                                                        </p>
-                                                    )}
-                                                    <div className="flex flex-wrap gap-4">
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                                                            <CalendarDays className="w-4 h-4 text-blue-500" /> {c.date}
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-400">
-                                                            <MapPin className="w-4 h-4 text-orange-500" /> {c.location}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
 
-                                            {/* Pledge Reward Card In-List */}
-                                            {selectedChallanIds.length > 0 && (
-                                                <div className="mt-8 animate-in zoom-in duration-500 translate-y-2">
-                                                    <div className="bg-gradient-to-br from-amber-50 to-orange-50/50 border border-amber-100 rounded-xl overflow-hidden shadow-lg shadow-amber-200/20">
-                                                        <div className="bg-amber-100/50 px-6 py-4 flex justify-between items-center border-b border-amber-100">
-                                                            <span className="text-[11px] font-black text-amber-900 uppercase tracking-widest">Pledge & Claim Rewards</span>
-                                                            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-amber-600 shadow-sm">
-                                                                <Star className="w-5 h-5 fill-current" />
-                                                            </div>
+                                                    <div className="mb-2">
+                                                        <span className="text-xs font-bold text-gray-400">Challan no: {c.challanNumber}</span>
+                                                    </div>
+                                                    
+                                                    <div className="mb-4">
+                                                        <h3 className="text-2xl font-black text-gray-900">₹{c.amount}</h3>
+                                                        <p className="text-sm font-bold text-gray-800 leading-tight mt-1 line-clamp-2">{c.violation}</p>
+                                                    </div>
+
+                                                    <div className="space-y-2 mb-6">
+                                                        <div className="flex items-center gap-2 text-[11px] font-bold text-gray-400">
+                                                            <CalendarDays className="w-3.5 h-3.5" /> Issued On {new Date(c.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                         </div>
-                                                        <div className="p-6">
-                                                            <div className="flex items-end justify-between gap-4">
-                                                                <div>
-                                                                    <p className="text-3xl font-black text-gray-900">₹{challanData.pendingChallans.filter(c => selectedChallanIds.includes(c.challanNumber)).reduce((sum, c) => sum + c.amount, 0).toLocaleString()}</p>
-                                                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total amount selected</p>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => navigate("/checkout", { 
-                                                                        state: { 
-                                                                            challanData, 
-                                                                            selectedChallanIds, 
-                                                                            isPledged: false,
-                                                                            name,
-                                                                            phone,
-                                                                            city
-                                                                        } 
-                                                                    })}
-                                                                    className="px-8 h-14 bg-[#0097B2] hover:bg-[#00ADC8] text-white rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-cyan-100 transition-all active:scale-95 whitespace-nowrap"
-                                                                >
-                                                                    Proceed To Pay <ArrowRight size={18} />
-                                                                </button>
-                                                            </div>
+                                                        <div className="flex items-center gap-2 text-[11px] font-bold text-gray-400">
+                                                            <MapPin className="w-3.5 h-3.5" /> {c.location || "N/A"}
                                                         </div>
                                                     </div>
-                                                    <div className="mt-4 text-center">
-                                                        <button 
-                                                            type="button"
-                                                            onClick={() => setSelectedChallanIds([])}
-                                                            className="text-xs font-black text-gray-300 uppercase tracking-widest hover:text-gray-900 transition-colors"
-                                                        >
-                                                            Cancel Selection
+
+                                                    <div className="flex items-center justify-between pt-4 border-t border-gray-50">
+                                                        <span className="bg-gray-100 text-gray-500 text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-md">
+                                                            PENDING SINCE {Math.floor((new Date().getTime() - new Date(c.date).getTime()) / (1000 * 3600 * 24))} DAYS
+                                                        </span>
+                                                        <button className="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                                                            Details <ArrowRight className="w-3 h-3" />
                                                         </button>
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    ) : null}
-                                </div>
-
-                                <div className="pt-4 space-y-4">
-                                    <button
-                                        onClick={() => navigate("/services?specialization=Traffic%20Challan")}
-                                        className="w-full py-4 bg-gray-900 hover:bg-black text-white rounded-2xl text-lg font-extrabold transition-all active:scale-[0.98]"
-                                    >
-                                        Talk to Expert to Resolve
-                                    </button>
-
-                                    <div className="flex flex-col sm:flex-row items-center justify-between p-5 bg-green-50/50 border border-green-100 rounded-3xl gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-green-500 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-green-200 shrink-0">
-                                                <FaWhatsapp size={24} />
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-0.5">Need Instant Help?</p>
-                                                <p className="text-base font-black text-gray-900">WhatsApp Expert</p>
-                                            </div>
-                                        </div>
-                                        <a
-                                            href="https://wa.me/919968739968?text=I%20need%20expert%20help%20with%20my%20challan"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-full sm:w-auto px-6 py-3 bg-green-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-green-100 hover:bg-green-600 transition-all text-center flex items-center justify-center gap-2"
-                                        >
-                                            Chat Now <ArrowRight size={14} />
-                                        </a>
+                                            ))}
                                     </div>
 
-                                    <button
-                                        onClick={() => setStep(1)}
-                                        className="w-full py-4 text-gray-400 text-sm font-bold hover:text-blue-600 transition-colors"
-                                    >
-                                        Check Another Vehicle
-                                    </button>
+                                    {/* Empty State */}
+                                    {challanData.pendingChallans.filter(c => activeTab === "pending" ? c.status === "pending" : c.status !== "pending").length === 0 && (
+                                        <div className="bg-white rounded-[40px] p-20 text-center border border-dashed border-gray-200">
+                                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
+                                                <ClipboardCheck className="w-10 h-10" />
+                                            </div>
+                                            <h3 className="text-xl font-black text-gray-900 mb-2">No {activeTab} challans</h3>
+                                            <p className="text-sm font-bold text-gray-400">Great job! All your records are clear.</p>
+                                        </div>
+                                    )}
+
+                                    {/* History/Payments Links Section */}
+                                    <div className="mt-12 pt-8 border-t border-gray-100">
+                                        <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 text-center">Quick Access</h5>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                onClick={() => navigate("/my-bookings")}
+                                                className="flex items-center justify-center gap-2 bg-blue-50 text-[#1a365d] font-bold py-4 rounded-3xl border border-blue-100 hover:bg-blue-100 transition-all text-sm"
+                                            >
+                                                <History className="w-4 h-4" />
+                                                History
+                                            </button>
+                                            <button
+                                                onClick={() => navigate("/my-payments")}
+                                                className="flex items-center justify-center gap-2 bg-green-50 text-green-700 font-bold py-4 rounded-3xl border border-green-100 hover:bg-green-100 transition-all text-sm"
+                                            >
+                                                <CreditCard className="w-4 h-4" />
+                                                Payments
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {/* Floating Sticky Footer Checkout */}
+                                {selectedChallanIds.length > 0 && activeTab === "pending" && (
+                                    <div className="fixed bottom-0 left-0 right-0 z-[100] px-4 pb-8 md:pb-10 pointer-events-none">
+                                        <div className="max-w-4xl mx-auto pointer-events-auto">
+                                            <div className="bg-white rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] border border-gray-100 p-6 flex flex-col md:flex-row items-center justify-between gap-6 animate-in slide-in-from-bottom-20 duration-500">
+                                                <div className="flex flex-col items-center md:items-start">
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total selected</p>
+                                                    <h4 className="text-xl font-black text-gray-900">{selectedChallanIds.length} challans</h4>
+                                                </div>
+                                                
+                                                <button
+                                                    onClick={() => navigate("/checkout", {
+                                                        state: {
+                                                            challanData,
+                                                            selectedChallanIds,
+                                                            isPledged: false,
+                                                            name,
+                                                            phone,
+                                                            city
+                                                        }
+                                                    })}
+                                                    className="w-full md:w-auto px-12 h-16 bg-[#FFA800] hover:bg-orange-500 text-white rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl shadow-orange-500/20 transition-all active:scale-[0.98]"
+                                                >
+                                                    Continue to pay <ArrowRight className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

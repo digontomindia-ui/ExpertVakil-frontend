@@ -2,10 +2,10 @@
 // API Configuration
 const API_CONFIG = {
   // Development URL
-  BASE_URL: import.meta.env.VITE_API_URL || "https://api.legalnetwork.in",
+  BASE_URL: import.meta.env.VITE_API_URL || "http://localhost:4000",
 
   // Production URL (uncomment when deploying)
-  // BASE_URL: "https://api.legalnetwork.in",
+  // BASE_URL: "http://localhost:4000",
 
   // API endpoints
   ENDPOINTS: {
