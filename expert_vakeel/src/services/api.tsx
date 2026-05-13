@@ -849,14 +849,14 @@ export const challanAPI = {
   searchRapid: async (rcNumber: string) => {
     const options = {
       method: 'POST',
-      url: 'https://rto-challan-information-india.p.rapidapi.com/',
+      url: 'https://rto-challan-information-india.p.rapidapi.com/fetch_challan_info',
       headers: {
         'content-type': 'application/json',
         'x-rapidapi-host': 'rto-challan-information-india.p.rapidapi.com',
-        'x-rapidapi-key': '41d4a6c504msh7c51ebcf7242283p1bb1aejsn8959ab2cea67'
+        'x-rapidapi-key': '4fd4a6c504msh7c51ebcf7242283p1bb1aejsn9959ab2cea67'
       },
       data: {
-        rc_number: rcNumber
+        reg_no: rcNumber
       }
     };
     return axios.request(options);
