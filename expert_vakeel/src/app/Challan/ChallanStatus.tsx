@@ -364,6 +364,7 @@ export default function ChallanStatus() {
                         accusedName: c.owner_name || c.accused_name || c.accusedName || ownerName,
                     }));
 
+                    
                     totalPending = processedChallans
                         .filter(c => c.status === "pending")
                         .reduce((sum: number, c: any) => sum + c.amount, 0);
